@@ -10,6 +10,7 @@ import PurchRedempForm from './components/PurchRedempForm';
 import SwitchForm from './components/SwitchForm';
 import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
+import { hollowPurchRedempObj, hollowSwitchObj, hollowSystematicObj } from './utils/initialDataObject';
 
 function App() {
   const [alert, setAlert] = useState({
@@ -19,6 +20,8 @@ function App() {
     message: 'Missing xyz field in systematic form'
   })
 
+  const [completeTransactionData, setCompleteTransactionData] = useState({});
+
   const [commonData, setCommonData] = useState({
     email: '',
     transactionPreference: 'ASAP',
@@ -26,45 +29,15 @@ function App() {
     panNumber: '',
     investorFirstName: '',
     investorLastName: ''
-  });
+  });  
+  
+  const [systematicData, setSystematicData] = useState([hollowSystematicObj])
+  const [purchRedempData, setPurchRedempData] = useState([hollowPurchRedempObj]);
+  const [switchData, setSwitchData] = useState([hollowSwitchObj]);
 
-  const [systematicData, setSystematicData] = useState({
-    systematicTraxFor: '',
-    systematicTraxType: 'SIP',
-    systematicSchemeName: '',
-    systematicMfAmcName: '',
-    systematicSourceScheme: '',
-    systematicSchemeOption: '',
-    systematicFolio: 'Create New Folio',
-    sip_swp_stpAmount: 1,
-    tenureOfSip_swp_stp: 9999,
-    sipPauseMonths: '2 Months',
-    sip_stp_swpDate: '',
-    firstTransactionAmount: 1,
-    systematicRemarksByEntryPerson: '',
-  })
-
-  const [purchRedempData, setPurchRedempData] = useState({
-    purch_RedempTraxType: '',
-    purch_redempMfAmcName: '',
-    purch_redempSchemeName: '',
-    purch_redempSchemeOption: '',
-    purch_redempFolio: 'Create New Folio',
-    purch_redempTransactionUnits_Amount: 'Amount Given in next question',
-    purch_redempTransactionAmount: 1,
-    purch_redempRemarksByEntryPerson: '',
-  })
-
-  const [switchData, setSwitchData] = useState({
-    switchMfAmcName: '',
-    switchFromScheme: '',
-    switchToScheme: '',
-    switchSchemeOption: '',
-    switchFolio: 'Create New Folio',
-    switchTransactionUnits_Amount: 'Amount Given in next question',
-    switchTransactionAmount: 1,
-    switchRemarksByEntryPerson: '',
-  })
+  const [systematicCount, setSystematicCount] = useState(1)
+  const [purchRedempCount, setPurchRedempCount] = useState(1)
+  const [switchCount, setSwitchCount] = useState(1)
 
   // const [currentForm, setCurrentForm] = useState('systematic')
   const currentForm = useQuery().get('tab') || 'systematic';
@@ -76,43 +49,175 @@ function App() {
     {id: 'switch', name: 'Switch'},
   ]
 
-  const changeCommonData = (e) => {
-    const {name, value} = e.target;
-    console.log('name: ', name, " value: ", value)
-    setCommonData(prevData => ({...prevData, [name]: value}))
+  // method to handle change in systematic data
+  const handleCommonDataChange = (e) => {
+    const { name, value } = e.target;
+
+    setCommonData(prevData => {
+      return { ...prevData, [name]: value }; 
+    });
+  };
+
+  // method to handle change in systematic data
+  const handleSystematicChange = (e) => {
+    const { name, value, dataset } = e.target;
+    const index = parseInt(dataset.index, 10); // Get the index from the dataset in integer
+    let nameWithoutIdx = name.split("-", 1)[0];
+
+    setSystematicData(prevData => {
+      // Create a new array with updated values
+      return prevData.map((item, idx) => {
+        if (idx === index) {
+          return { ...item, [nameWithoutIdx]: value }; // Update the specific field
+        }
+        return item;
+      });
+    });
+  };
+
+  // method to handle change in select menus of systematic
+  const handleSystematicSelect = (name, value, index) => {
+    console.log('From select -> name: ', name, ' value: ', value, ' index: ', index);
+
+    setSystematicData(prevData => {
+      return prevData.map((item, idx) => {
+        if (idx.toString() === index.toString()) {
+          return { ...item, [name]: value };
+        }
+        return item;
+      });
+    });
   }
 
-  const changeSystematicData = (e) => {
-    const {name, value} = e.target;
-    console.log('name: ', name, " value: ", value)
-    setSystematicData(prevData => ({...prevData, [name]: value}))
+  // method to add transaction in systematic
+  const handleSystematicAdd = () => {
+    setSystematicData(prevData => (
+      [...prevData, hollowSystematicObj]
+    ))
+    
+    // increase count 
+    setSystematicCount(prevCount => prevCount + 1)
   }
 
-  const changePurchRedempData = (e) => {
-    const {name, value} = e.target;
-    console.log('name: ', name, " value: ", value)
-    setPurchRedempData(prevData => ({...prevData, [name]: value}))
+  // method to remove transaction from systematic
+  const handleSystematicRemove = (index) => {
+    setSystematicData(prevData => {
+      return prevData.filter((item, idx) => {
+        if (idx !== index)
+          return item
+      })
+    })
+
+    // decrease count 
+    setSystematicCount(prevCount => prevCount - 1)
   }
 
-  const changeSwitchData = (e) => {
-    const {name, value} = e.target;
-    console.log('name: ', name, " value: ", value)
-    setSwitchData(prevData => ({...prevData, [name]: value}))
+  // method to handle change in purchase/redemption data
+  const handlePurchRedempChange = (e) => {
+    const { name, value, dataset } = e.target;
+    const index = parseInt(dataset.index, 10); // Get the index from the dataset in integer
+    let nameWithoutIdx = name.split("-", 1)[0];
+
+    setPurchRedempData(prevData => {
+      // Create a new array with updated values
+      return prevData.map((item, idx) => {
+        if (idx === index) {
+          return { ...item, [nameWithoutIdx]: value }; // Update the specific field
+        }
+        return item;
+      });
+    });
+  };
+
+  // method to handle change in select menus of purchase/redemption
+  const handlePurchRedempSelect = (name, value, index) => {
+    console.log('From select -> name: ', name, ' value: ', value, ' index: ', index);
+
+    setPurchRedempData(prevData => {
+      return prevData.map((item, idx) => {
+        if (idx === index) {
+          return { ...item, [name]: value };
+        }
+        return item;
+      });
+    });
   }
 
-  const handleSystematicSelect = (name, value) => {
-    console.log('from select -> name: ', name, " value: ", value) //test
-    setSystematicData(prevData => ({...prevData, [name]: value}))
+  // method to add transaction in purchase/redemption
+  const handlePurchRedempAdd = () => {
+    setPurchRedempData(prevData => (
+      [...prevData, hollowPurchRedempObj]
+    ))
+    
+    // increase count 
+    setPurchRedempCount(prevCount => prevCount + 1)
   }
 
-  const handlePurchRedempSelect = (name, value) => {
-    console.log('from select -> name: ', name, " value: ", value) //test
-    setPurchRedempData(prevData => ({...prevData, [name]: value}))
+  // method to remove transaction from purchase/redemption
+  const handlePurchRedempRemove = (index) => {
+    setPurchRedempData(prevData => {
+      return prevData.filter((item, idx) => {
+        if (idx !== index)
+          return item
+      })
+    })
+    
+    // decrease count 
+    setPurchRedempCount(prevCount => prevCount - 1)
+  }
+   
+  // method to handle change in switch data
+  const handleSwitchChange = (e) => {
+    const { name, value, dataset } = e.target;
+    const index = parseInt(dataset.index, 10); // Get the index from the dataset in integer
+    let nameWithoutIdx = name.split("-", 1)[0];
+
+    setSwitchData(prevData => {
+      // Create a new array with updated values
+      return prevData.map((item, idx) => {
+        if (idx === index) {
+          return { ...item, [nameWithoutIdx]: value }; // Update the specific field
+        }
+        return item;
+      });
+    });
+  };
+
+  // method to handle change in select menus of switch
+  const handleSwitchSelect = (name, value, index) => {
+    console.log('From select -> name: ', name, ' value: ', value, ' index: ', index);
+
+    setSwitchData(prevData => {
+      return prevData.map((item, idx) => {
+        if (idx === index) {
+          return { ...item, [name]: value };
+        }
+        return item;
+      });
+    });
   }
 
-  const handleSwitchSelect = (name, value) => {
-    console.log('from select -> name: ', name, " value: ", value) //test
-    setSwitchData(prevData => ({...prevData, [name]: value}))
+  // method to add transaction in Switch
+  const handleSwitchAdd = () => {
+    setSwitchData(prevData => (
+      [...prevData, hollowSwitchObj]
+    ))
+
+    // increase count 
+    setSwitchCount(prevCount => prevCount + 1)
+  }
+
+  // method to remove transaction from switch
+  const handleSwitchRemove = (index) => {
+    setSwitchData(prevData => {
+      return prevData.filter((item, idx) => {
+        if (idx !== index)
+          return item
+      })
+    })
+
+    // decrease count 
+    setSwitchCount(prevCount => prevCount - 1)
   }
 
   // method to update alert 
@@ -129,15 +234,36 @@ function App() {
     <main className=''>
       <Alert alertState={alert} updateAlert={updateAlert} />
       <form action="" onSubmit={submitForm} className='flex flex-col gap-y-8'>
-        <Header commonData={commonData} onChange={changeCommonData}/>
+        <Header commonData={commonData} onChange={handleCommonDataChange}/>
 
         <Tabs tabs={tabs} />
         {
           currentForm === 'systematic' ? 
-            <SystematicForm systematicData={systematicData} onChange={changeSystematicData} onSelect={handleSystematicSelect}/> :
+            <SystematicForm 
+              systematicData={systematicData} 
+              handleChange={handleSystematicChange} 
+              handleSelect={handleSystematicSelect}
+              count={systematicCount}
+              handleAdd={handleSystematicAdd}
+              handleRemove={handleSystematicRemove}
+            /> :
             currentForm === 'pur-red' ?
-            <PurchRedempForm purchRedempData={purchRedempData} onChange={changePurchRedempData} onSelect={handlePurchRedempSelect}/> :
-            <SwitchForm switchData={switchData} onChange={changeSwitchData} onSelect={handleSwitchSelect}/>
+            <PurchRedempForm 
+              purchRedempData={purchRedempData} 
+              handleChange={handlePurchRedempChange} 
+              handleSelect={handlePurchRedempSelect}
+              count={purchRedempCount}
+              handleAdd={handlePurchRedempAdd}
+              handleRemove={handlePurchRedempRemove}
+            /> :
+            <SwitchForm 
+              switchData={switchData} 
+              handleChange={handleSwitchChange} 
+              handleSelect={handleSwitchSelect}
+              count={switchCount}
+              handleAdd={handleSwitchAdd}
+              handleRemove={handleSwitchRemove}
+            />
         }
         <PrimaryButton text={'Submit'} width={'320px'}/>
       </form>

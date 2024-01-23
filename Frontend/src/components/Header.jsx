@@ -12,7 +12,7 @@ function Header({ commonData, onChange }) {
       <h1 className='text-3xl text-primary-white py-2 bg-light-blue'>MF TRANSACTIONS</h1>
       <fieldset className='flex flex-col gap-3 mt-3'>
         {/* <legend></legend> */}
-        <div className='grow shrink w-80'>
+        {/* <div className='grow shrink w-80'>
           <EmailInput
             id='email'
             label='Email'
@@ -21,7 +21,7 @@ function Header({ commonData, onChange }) {
             onChange={onChange}
             secondItem='@niveshonline.com'
           />
-        </div>
+        </div> */}
 
         <div className='grow shrink'>
           <RadioInput
@@ -34,7 +34,7 @@ function Header({ commonData, onChange }) {
           />
         </div>
 
-        <div className='grow shrink w-80 mt-2'>
+        {/* <div className='grow shrink w-80 mt-2'>
           <InputList
             id='registrant'
             label='Entry done by'
@@ -44,7 +44,7 @@ function Header({ commonData, onChange }) {
             onChange={onChange}
             listOptions={doneByOptions}
           />
-        </div>
+        </div> */}
         <div className='grow shrink w-80'>
           <TextInput
             id='panNumber'

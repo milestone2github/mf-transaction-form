@@ -16,7 +16,7 @@ function Tabs({tabs}) {
     <ul className="flex">{
       tabs.map((tab) => (
         <li className="" key={tab.id}>
-          <button type='button' onClick={() => handleTabChange(tab.id)} className={`px-3 py-1 border border-b-[1px] ${currentTab === tab.id ? 'border-gray-400 border-b-transparent text-light-blue' : 'border-transparent border-b-gray-400 text-gray-400'}`} >{tab.name}</button>
+          <button type='button' onClick={() => handleTabChange(tab.id)} className={`relative px-3 py-1 border border-b-2 z-[3] ${currentTab === tab.id ? 'border-gray-400 border-b-primary-white text-light-blue' : 'border-transparent text-gray-400'}`} >{tab.name}</button>
         </li>
 
       ))

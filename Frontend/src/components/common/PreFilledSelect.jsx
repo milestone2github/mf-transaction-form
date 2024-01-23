@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IoChevronDownOutline } from "react-icons/io5";
 
-const PreFilledSelect = ({ label, id, selectedOption, options, onSelect }) => {
+const PreFilledSelect = ({ label, id, index, selectedOption, options, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
   // const [selectedOption, setSelectedOption] = useState(options[0]);
   const [highlightedIndex, setHighlightedIndex] = useState(options.indexOf(selectedOption));
@@ -12,7 +12,7 @@ const PreFilledSelect = ({ label, id, selectedOption, options, onSelect }) => {
   // method to handle click on options 
   const handleOptionClick = (option) => {
     // setSelectedOption(option);
-    onSelect(id, option); // Callback for parent component
+    onSelect(id, option, index); // Callback for parent component
     setIsOpen(false);
   };
 
@@ -53,9 +53,7 @@ const PreFilledSelect = ({ label, id, selectedOption, options, onSelect }) => {
       case 'Enter': 
         console.log('key: ', event.key)
       case 'Space': console.log('key: ', event.key)
-        // setSelectedOption(options[highlightedIndex]);
-        onSelect(id, options[highlightedIndex]);
-        setIsOpen(false);
+        handleOptionClick(options[highlightedIndex])
         break;
       case 'Escape':
         setIsOpen(false);

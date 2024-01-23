@@ -1,12 +1,12 @@
 import React from 'react'
 
 function EmailInput(props) {
-  const { id, label, value, onChange, placeHolder, type, length, required, secondItem } = props;
+  const { id, label, value, onChange, index, placeHolder, type, length, required, secondItem } = props;
 
   return (
     <div className='flex flex-col gap-1'>
       <label
-        htmlFor={id}
+        htmlFor={`${id}-${index}`}
         className='text-gray-750 text-sm text-start'
       >{label}
       </label>
@@ -16,7 +16,8 @@ function EmailInput(props) {
           type={type}
           className='bg-transparent text-black-900 rounded-md border-2 w-full border-gray-300 py-2 px-2 pe-40 outline-none focus-within:border-light-blue disabled:border-gray-200'
           name={id}
-          id={id}
+          id={`${id}-${index}`}
+          data-index={index}
           title={placeHolder}
           required={required}
           minLength={length}

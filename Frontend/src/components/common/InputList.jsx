@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 function InputList({ 
   id, 
   value, 
+  index,
   onChange, 
   listName, 
   listOptions, 
@@ -31,16 +32,17 @@ function InputList({
 
   const handleBlur = (event) => {
     const newValue = event.target.value;
+    const dataset = event.target.dataset;
     if (!listOptions.includes(newValue)) {
       setInputValue(''); // Clear the input or set it to the last valid value
-      if (onChange) onChange({ target: { name: id, value: '' }}); // Call the original onChange if provided
+      if (onChange) onChange({ target: { name: id, value: '', dataset }}); // Call the original onChange if provided
     }
   };
 
   return (
     <div className='flex flex-col gap-1'>
       <label 
-        htmlFor={id}
+        htmlFor={`${id}-${index}`}
         className='text-gray-750 text-sm text-left'
         >{label}
       </label>
@@ -48,7 +50,8 @@ function InputList({
       <input  
         className='bg-transparent text-black-900 rounded-md border-2 w-full border-gray-300 py-2 px-2 outline-none focus-within:border-light-blue disabled:border-gray-200'
         name={id} 
-        id={id} 
+        id={`${id}-${index}`}
+        data-index={index} 
         list={listName}
         required={required}
         disabled={disable}

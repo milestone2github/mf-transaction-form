@@ -1,13 +1,15 @@
 import React from 'react'
 
-function TextAreaInput({id, rows, cols, label, value, onChange, minLength, maxLength, required}) {
+function TextAreaInput({id, rows, cols, label, index, value, onChange, minLength, maxLength, required}) {
   return (
     <div className='flex flex-col gap-1'>
-    <label htmlFor={id} className='text-sm text-left text-gray-750'>{label}</label>
+    <label htmlFor={`${id}-${index}`} className='text-sm text-left text-gray-750'>{label}</label>
     <textarea 
       rows={rows} 
       cols={cols} 
       name={id}
+      id={`${id}-${index}`}
+      data-index={index}
       minLength={minLength}
       maxLength={maxLength}
       required={required}

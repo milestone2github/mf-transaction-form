@@ -11,6 +11,8 @@ import SwitchForm from './components/SwitchForm';
 import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
 import { hollowPurchRedempObj, hollowSwitchObj, hollowSystematicObj } from './utils/initialDataObject';
+import { useRef } from 'react';
+const baseUrl = 'http://localhost:5000'
 
 function App() {
   const [alert, setAlert] = useState({
@@ -29,8 +31,8 @@ function App() {
     panNumber: '',
     investorFirstName: '',
     investorLastName: ''
-  });  
-  
+  });
+
   const [systematicData, setSystematicData] = useState([hollowSystematicObj])
   const [purchRedempData, setPurchRedempData] = useState([hollowPurchRedempObj]);
   const [switchData, setSwitchData] = useState([hollowSwitchObj]);
@@ -38,15 +40,16 @@ function App() {
   const [systematicCount, setSystematicCount] = useState(1)
   const [purchRedempCount, setPurchRedempCount] = useState(1)
   const [switchCount, setSwitchCount] = useState(1)
+  const commonFormSubmitBtn = useRef(null);
 
   // const [currentForm, setCurrentForm] = useState('systematic')
   const currentForm = useQuery().get('tab') || 'systematic';
 
   // Tabs for form types 
   const tabs = [
-    {id: 'systematic', name: 'Systematic'},
-    {id: 'pur-red', name: 'Purchase/Redemption'},
-    {id: 'switch', name: 'Switch'},
+    { id: 'systematic', name: 'Systematic' },
+    { id: 'pur-red', name: 'Purchase/Redemption' },
+    { id: 'switch', name: 'Switch' },
   ]
 
   // method to handle change in systematic data
@@ -54,7 +57,7 @@ function App() {
     const { name, value } = e.target;
 
     setCommonData(prevData => {
-      return { ...prevData, [name]: value }; 
+      return { ...prevData, [name]: value };
     });
   };
 
@@ -94,7 +97,7 @@ function App() {
     setSystematicData(prevData => (
       [...prevData, hollowSystematicObj]
     ))
-    
+
     // increase count 
     setSystematicCount(prevCount => prevCount + 1)
   }
@@ -148,7 +151,7 @@ function App() {
     setPurchRedempData(prevData => (
       [...prevData, hollowPurchRedempObj]
     ))
-    
+
     // increase count 
     setPurchRedempCount(prevCount => prevCount + 1)
   }
@@ -161,11 +164,11 @@ function App() {
           return item
       })
     })
-    
+
     // decrease count 
     setPurchRedempCount(prevCount => prevCount - 1)
   }
-   
+
   // method to handle change in switch data
   const handleSwitchChange = (e) => {
     const { name, value, dataset } = e.target;
@@ -225,49 +228,197 @@ function App() {
     setAlert(alert)
   }
 
-  const submitForm = (e) => {
+  // method to validate and save systematic form data 
+  const saveSystematicform = (e) => {
     e.preventDefault();
-    console.log('submitted')
+    e.stopPropagation();
+    let alert = {
+      isOn: true,
+      type: 'error',
+      header: 'Validation Error in Systematic Form',
+      message: ''
+    }
+
+    for (const sysItem of systematicData) {
+      if (!sysItem.systematicMfAmcName) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>MF (AMC) Name</strong></span>
+        updateAlert(alert);
+        return;
+      }
+      else if (!sysItem.sip_stp_swpDate) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>SIP / SWP / STP Date</strong></span>
+        updateAlert(alert);
+        return;
+      }
+    }
+
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, systematicData })
+    )
+    alert.header = '';
+    alert.type = 'success';
+    alert.message = 'saved'
+    updateAlert(alert)
+  }
+
+  // method to validate and save purchase/redemption form data 
+  const savePurchRedempform = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let alert = {
+      isOn: true,
+      type: 'error',
+      header: 'Validation Error in Purchase/Redemption Form',
+      message: ''
+    }
+
+    for (const purchRedempItem of purchRedempData) {
+      if (!purchRedempItem.purch_redempMfAmcName) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>MF (AMC) Name</strong></span>
+        updateAlert(alert);
+        return;
+      }
+    }
+
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, purchRedempData })
+    )
+    alert.header = '';
+    alert.type = 'success';
+    alert.message = 'saved'
+    updateAlert(alert)
+  }
+
+  // method to validate and save Switch form data 
+  const saveSwitchform = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let alert = {
+      isOn: true,
+      type: 'error',
+      header: 'Validation Error in Switch Form',
+      message: ''
+    }
+
+    for (const switchItem of switchData) {
+      if (!switchItem.switchMfAmcName) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>MF (AMC) Name</strong></span>
+        updateAlert(alert);
+        return;
+      }
+    }
+
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, switchData })
+    )
+    alert.header = '';
+    alert.type = 'success';
+    alert.message = 'saved'
+    updateAlert(alert)
+  }
+
+  const submitForm = async (e) => {
+    e.preventDefault();
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, commonData })
+    )
+
+    let alert = {
+      isOn: true,
+      type: 'error',
+      header: 'Submission Error',
+      message: ''
+    }
+
+    // show error alert if no form data has been saved 
+    const propertiesToCheck = ['systematicData', 'purchRedempData', 'switchData'];
+    const hasAnyProperty = propertiesToCheck.some(prop => completeTransactionData.hasOwnProperty(prop));
+    if (!hasAnyProperty) {
+      alert.message = <span>Please save each of the form before submission</span>;
+      updateAlert(alert)
+      return;
+    }
+
+    // api call to submit form data 
+    const formData = {commonData, ...completeTransactionData}
+    console.log(formData)
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formData })
+    };
+    try {
+      const response = await fetch(`${baseUrl}/api/data`, requestOptions);
+      const data = await response.json();
+
+      if(!response.ok) {
+        alert.message = <span>Server error! Try again later</span>;
+        updateAlert(alert)
+        return;
+      }
+
+      console.log('submitted')
+      updateAlert({
+        isOn: true,
+        type: 'success',
+        header: 'Form submitted',
+        message: ''
+      })
+    } catch (error) {
+      console.log(error);
+      alert.message = <span>Server error! Try again later</span>;
+      updateAlert(alert)
+    } 
+  }
+
+  // method to trigger submit button of common data form 
+  const triggerSubmitBtn = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    commonFormSubmitBtn.current.click();
   }
 
   return (
-    <main className=''>
+    <div >
       <Alert alertState={alert} updateAlert={updateAlert} />
-      <form action="" onSubmit={submitForm} className='flex flex-col gap-y-8'>
-        <Header commonData={commonData} onChange={handleCommonDataChange}/>
+      <div action="" onSubmit={submitForm} className='flex flex-col gap-y-8'>
+        <Header commonData={commonData} onChange={handleCommonDataChange} handleSubmit={submitForm} submitBtn={commonFormSubmitBtn} />
 
         <Tabs tabs={tabs} />
         {
-          currentForm === 'systematic' ? 
-            <SystematicForm 
-              systematicData={systematicData} 
-              handleChange={handleSystematicChange} 
+          currentForm === 'systematic' ?
+            <SystematicForm
+              systematicData={systematicData}
+              handleChange={handleSystematicChange}
               handleSelect={handleSystematicSelect}
+              handleSubmit={saveSystematicform}
               count={systematicCount}
               handleAdd={handleSystematicAdd}
               handleRemove={handleSystematicRemove}
             /> :
             currentForm === 'pur-red' ?
-            <PurchRedempForm 
-              purchRedempData={purchRedempData} 
-              handleChange={handlePurchRedempChange} 
-              handleSelect={handlePurchRedempSelect}
-              count={purchRedempCount}
-              handleAdd={handlePurchRedempAdd}
-              handleRemove={handlePurchRedempRemove}
-            /> :
-            <SwitchForm 
-              switchData={switchData} 
-              handleChange={handleSwitchChange} 
-              handleSelect={handleSwitchSelect}
-              count={switchCount}
-              handleAdd={handleSwitchAdd}
-              handleRemove={handleSwitchRemove}
-            />
+              <PurchRedempForm
+                purchRedempData={purchRedempData}
+                handleChange={handlePurchRedempChange}
+                handleSelect={handlePurchRedempSelect}
+                handleSubmit={savePurchRedempform}
+                count={purchRedempCount}
+                handleAdd={handlePurchRedempAdd}
+                handleRemove={handlePurchRedempRemove}
+              /> :
+              <SwitchForm
+                switchData={switchData}
+                handleChange={handleSwitchChange}
+                handleSelect={handleSwitchSelect}
+                handleSubmit={saveSwitchform}
+                count={switchCount}
+                handleAdd={handleSwitchAdd}
+                handleRemove={handleSwitchRemove}
+              />
         }
-        <PrimaryButton text={'Submit'} width={'320px'}/>
-      </form>
-    </main>
+        <PrimaryButton action={triggerSubmitBtn} text={'Submit'} width={'320px'} />
+      </div>
+    </div>
   )
 }
 

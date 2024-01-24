@@ -10,10 +10,10 @@ import Badge from './common/Badge';
 import AddButton from './common/AddButton';
 import CloseButton from './common/CloseButton';
 
-function PurchRedempForm({ purchRedempData, handleChange, handleSelect, count, handleAdd, handleRemove }) {
+function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSubmit, count, handleAdd, handleRemove }) {
   
   return (
-    <div className='relative -mt-[33px] px-3 py-4 flex flex-col gap-y-8 border border-gray-400 '>
+    <form onSubmit={handleSubmit} className='relative -mt-[33px] px-3 py-4 flex flex-col gap-y-8 border border-gray-400 '>
       <div className='basis-full flex justify-between'>
         <Badge text={'Transactions'} count={count} />
         <AddButton title={'Add transaction'} action={handleAdd} />
@@ -120,7 +120,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, count, h
           </div>
         </fieldset>
       ))}
-    </div>
+    </form>
   )
 }
 

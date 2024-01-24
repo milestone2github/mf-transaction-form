@@ -5,12 +5,14 @@ import InputList from './common/InputList'
 import TextInput from './common/TextInput'
 import { doneByOptions, transactionPrefOptions } from '../utils/optionLists'
 
-function Header({ commonData, onChange }) {
+function Header({ commonData, onChange, handleSubmit, submitBtn }) {
 
   return (
     <div>
+      <header>
       <h1 className='text-3xl text-primary-white py-2 bg-light-blue'>MF TRANSACTIONS</h1>
-      <fieldset className='flex flex-col gap-3 mt-3'>
+      </header>
+      <form onSubmit={handleSubmit} className='flex flex-col gap-3 mt-3'>
         {/* <legend></legend> */}
         {/* <div className='grow shrink w-80'>
           <EmailInput
@@ -77,8 +79,8 @@ function Header({ commonData, onChange }) {
             />
           </div>
         </fieldset>
-
-      </fieldset>
+        <button ref={submitBtn} type='submit' className='hidden'>Submit</button>
+      </form>
     </div>
   )
 }

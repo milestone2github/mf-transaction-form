@@ -22,9 +22,9 @@ function Alert({alertState, updateAlert}) {
 
   if(isOn)
   return (
-    <div className={`fixed top-4 left-1/2 -translate-x-1/2 bg-light-bg/10 backdrop-blur-lg rounded border border-s-8 ${colorStyle.border} text-left px-3 py-1 z-50 w-72 md:w-9/12`}>
-      <strong className={`text-base ${colorStyle.header}`}>{header}</strong>
-      <p className='text-base text-gray-750'>{message}</p>
+    <div className={`fixed top-4 left-1/2 -translate-x-1/2 bg-primary-white shadow-md backdrop-blur-lg rounded border border-s-8 ${colorStyle.border} text-left px-3 pe-8 py-1 z-50 w-fit max-w-72 md:max-w-screen-md`}>
+      <strong className={`text-sm ${colorStyle.header}`}>{header}</strong>
+      <p className='text-sm text-gray-750'>{message}</p>
       <button 
         className='text-gray-750 hover:text-gray-950 px-1 py-1 absolute right-1 top-1'
         onClick={dismissAlert}

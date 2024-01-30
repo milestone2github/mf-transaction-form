@@ -1,7 +1,7 @@
 
 export const hollowSystematicObj = {
-  systematicTraxFor: '',
   systematicTraxType: 'SIP',
+  systematicTraxFor: 'Registration',
   systematicSchemeName: '',
   systematicMfAmcName: '',
   systematicSourceScheme: '',

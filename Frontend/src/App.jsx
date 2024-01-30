@@ -12,6 +12,7 @@ import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
 import { hollowPurchRedempObj, hollowSwitchObj, hollowSystematicObj } from './utils/initialDataObject';
 import { useRef } from 'react';
+import { useSelector } from 'react-redux';
 const baseUrl = 'http://localhost:5000'
 
 function App() {
@@ -24,25 +25,14 @@ function App() {
 
   const [completeTransactionData, setCompleteTransactionData] = useState({});
 
-  const [commonData, setCommonData] = useState({
-    email: '',
-    transactionPreference: 'ASAP',
-    registrant: '',
-    panNumber: '',
-    investorFirstName: '',
-    investorLastName: ''
-  });
+  // get all data states from store 
+  const commonData = useSelector(state => state.commonData.value);
+  const systematicData = useSelector(state => state.systematicData.value);
+  const purchRedempData = useSelector(state => state.purchRedempData.value);
+  const switchData = useSelector(state => state.switchData.value);
 
-  const [systematicData, setSystematicData] = useState([hollowSystematicObj])
-  const [purchRedempData, setPurchRedempData] = useState([hollowPurchRedempObj]);
-  const [switchData, setSwitchData] = useState([hollowSwitchObj]);
-
-  const [systematicCount, setSystematicCount] = useState(1)
-  const [purchRedempCount, setPurchRedempCount] = useState(1)
-  const [switchCount, setSwitchCount] = useState(1)
   const commonFormSubmitBtn = useRef(null);
 
-  // const [currentForm, setCurrentForm] = useState('systematic')
   const currentForm = useQuery().get('tab') || 'systematic';
 
   // Tabs for form types 
@@ -51,177 +41,6 @@ function App() {
     { id: 'pur-red', name: 'Purchase/Redemption' },
     { id: 'switch', name: 'Switch' },
   ]
-
-  // method to handle change in systematic data
-  const handleCommonDataChange = (e) => {
-    const { name, value } = e.target;
-
-    setCommonData(prevData => {
-      return { ...prevData, [name]: value };
-    });
-  };
-
-  // method to handle change in systematic data
-  const handleSystematicChange = (e) => {
-    const { name, value, dataset } = e.target;
-    const index = parseInt(dataset.index, 10); // Get the index from the dataset in integer
-    let nameWithoutIdx = name.split("-", 1)[0];
-
-    setSystematicData(prevData => {
-      // Create a new array with updated values
-      return prevData.map((item, idx) => {
-        if (idx === index) {
-          return { ...item, [nameWithoutIdx]: value }; // Update the specific field
-        }
-        return item;
-      });
-    });
-  };
-
-  // method to handle change in select menus of systematic
-  const handleSystematicSelect = (name, value, index) => {
-    console.log('From select -> name: ', name, ' value: ', value, ' index: ', index);
-
-    setSystematicData(prevData => {
-      return prevData.map((item, idx) => {
-        if (idx.toString() === index.toString()) {
-          return { ...item, [name]: value };
-        }
-        return item;
-      });
-    });
-  }
-
-  // method to add transaction in systematic
-  const handleSystematicAdd = () => {
-    setSystematicData(prevData => (
-      [...prevData, hollowSystematicObj]
-    ))
-
-    // increase count 
-    setSystematicCount(prevCount => prevCount + 1)
-  }
-
-  // method to remove transaction from systematic
-  const handleSystematicRemove = (index) => {
-    setSystematicData(prevData => {
-      return prevData.filter((item, idx) => {
-        if (idx !== index)
-          return item
-      })
-    })
-
-    // decrease count 
-    setSystematicCount(prevCount => prevCount - 1)
-  }
-
-  // method to handle change in purchase/redemption data
-  const handlePurchRedempChange = (e) => {
-    const { name, value, dataset } = e.target;
-    const index = parseInt(dataset.index, 10); // Get the index from the dataset in integer
-    let nameWithoutIdx = name.split("-", 1)[0];
-
-    setPurchRedempData(prevData => {
-      // Create a new array with updated values
-      return prevData.map((item, idx) => {
-        if (idx === index) {
-          return { ...item, [nameWithoutIdx]: value }; // Update the specific field
-        }
-        return item;
-      });
-    });
-  };
-
-  // method to handle change in select menus of purchase/redemption
-  const handlePurchRedempSelect = (name, value, index) => {
-    console.log('From select -> name: ', name, ' value: ', value, ' index: ', index);
-
-    setPurchRedempData(prevData => {
-      return prevData.map((item, idx) => {
-        if (idx === index) {
-          return { ...item, [name]: value };
-        }
-        return item;
-      });
-    });
-  }
-
-  // method to add transaction in purchase/redemption
-  const handlePurchRedempAdd = () => {
-    setPurchRedempData(prevData => (
-      [...prevData, hollowPurchRedempObj]
-    ))
-
-    // increase count 
-    setPurchRedempCount(prevCount => prevCount + 1)
-  }
-
-  // method to remove transaction from purchase/redemption
-  const handlePurchRedempRemove = (index) => {
-    setPurchRedempData(prevData => {
-      return prevData.filter((item, idx) => {
-        if (idx !== index)
-          return item
-      })
-    })
-
-    // decrease count 
-    setPurchRedempCount(prevCount => prevCount - 1)
-  }
-
-  // method to handle change in switch data
-  const handleSwitchChange = (e) => {
-    const { name, value, dataset } = e.target;
-    const index = parseInt(dataset.index, 10); // Get the index from the dataset in integer
-    let nameWithoutIdx = name.split("-", 1)[0];
-
-    setSwitchData(prevData => {
-      // Create a new array with updated values
-      return prevData.map((item, idx) => {
-        if (idx === index) {
-          return { ...item, [nameWithoutIdx]: value }; // Update the specific field
-        }
-        return item;
-      });
-    });
-  };
-
-  // method to handle change in select menus of switch
-  const handleSwitchSelect = (name, value, index) => {
-    console.log('From select -> name: ', name, ' value: ', value, ' index: ', index);
-
-    setSwitchData(prevData => {
-      return prevData.map((item, idx) => {
-        if (idx === index) {
-          return { ...item, [name]: value };
-        }
-        return item;
-      });
-    });
-  }
-
-  // method to add transaction in Switch
-  const handleSwitchAdd = () => {
-    setSwitchData(prevData => (
-      [...prevData, hollowSwitchObj]
-    ))
-
-    // increase count 
-    setSwitchCount(prevCount => prevCount + 1)
-  }
-
-  // method to remove transaction from switch
-  const handleSwitchRemove = (index) => {
-    setSwitchData(prevData => {
-      return prevData.filter((item, idx) => {
-        if (idx !== index)
-          return item
-      })
-    })
-
-    // decrease count 
-    setSwitchCount(prevCount => prevCount - 1)
-  }
 
   // method to update alert 
   const updateAlert = (alert) => {
@@ -319,6 +138,8 @@ function App() {
 
   const submitForm = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+
     setCompleteTransactionData(
       prevData => ({ ...prevData, commonData })
     )
@@ -374,46 +195,28 @@ function App() {
   // method to trigger submit button of common data form 
   const triggerSubmitBtn = (e) => {
     e.preventDefault();
-    e.stopPropagation();
+    // e.stopPropagation();
     commonFormSubmitBtn.current.click();
   }
 
   return (
     <div >
       <Alert alertState={alert} updateAlert={updateAlert} />
-      <div action="" onSubmit={submitForm} className='flex flex-col gap-y-8'>
-        <Header commonData={commonData} onChange={handleCommonDataChange} handleSubmit={submitForm} submitBtn={commonFormSubmitBtn} />
+      <div className='flex flex-col gap-y-8'>
+        <Header handleSubmit={submitForm} submitBtn={commonFormSubmitBtn} />
 
         <Tabs tabs={tabs} />
         {
           currentForm === 'systematic' ?
             <SystematicForm
-              systematicData={systematicData}
-              handleChange={handleSystematicChange}
-              handleSelect={handleSystematicSelect}
               handleSubmit={saveSystematicform}
-              count={systematicCount}
-              handleAdd={handleSystematicAdd}
-              handleRemove={handleSystematicRemove}
             /> :
             currentForm === 'pur-red' ?
               <PurchRedempForm
-                purchRedempData={purchRedempData}
-                handleChange={handlePurchRedempChange}
-                handleSelect={handlePurchRedempSelect}
                 handleSubmit={savePurchRedempform}
-                count={purchRedempCount}
-                handleAdd={handlePurchRedempAdd}
-                handleRemove={handlePurchRedempRemove}
               /> :
               <SwitchForm
-                switchData={switchData}
-                handleChange={handleSwitchChange}
-                handleSelect={handleSwitchSelect}
                 handleSubmit={saveSwitchform}
-                count={switchCount}
-                handleAdd={handleSwitchAdd}
-                handleRemove={handleSwitchRemove}
               />
         }
         <PrimaryButton action={triggerSubmitBtn} text={'Submit'} width={'320px'} />

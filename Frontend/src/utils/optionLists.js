@@ -51,9 +51,7 @@ const folioOptions = [
 ]
 
 // list of systematic transaction type 
-const transactionOptions = [
-  'Registration', 'Pause', 'Cancellation'
-]
+const transactionOptions = new Array('Registration', 'Pause', 'Cancellation')
 
 // list of SIP Pause Months 
 const sipPauseMonthsOptions = [

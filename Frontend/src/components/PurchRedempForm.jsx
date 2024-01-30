@@ -9,14 +9,42 @@ import PrimaryButton from './common/PrimaryButton';
 import Badge from './common/Badge';
 import AddButton from './common/AddButton';
 import CloseButton from './common/CloseButton';
+import { useDispatch, useSelector } from 'react-redux';
+import { handleAdd, handleChange, handleRemove, handleSelect } from '../Reducers/PurchRedempDataSlice';
 
-function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSubmit, count, handleAdd, handleRemove }) {
-  
+function PurchRedempForm({ handleSubmit }) {
+  // get purchRedempData state from store
+  const purchRedempData = useSelector(state => state.purchRedempData.value);
+
+  // use useDispatch hook to use reducers
+  const dispatch = useDispatch();
+
+  // method to handle change in inputs 
+  const handleInputChange = (event) => {
+    const { name, value, dataset: { index } } = event.target;
+    dispatch(handleChange({ name, value, index }));
+  };
+
+  // method to handle change in select menus
+  const handleSelectChange = (name, value, index) => {
+    dispatch(handleSelect({ name, value, index }));
+  };
+
+  // method to add new form instance 
+  const addFormInstance = () => {
+    dispatch(handleAdd());
+  }
+
+  // method to delete existing form instance at specied index 
+  const removeFormInstance = (index) => {
+    dispatch(handleRemove(index));
+  }
+
   return (
     <form onSubmit={handleSubmit} className='relative -mt-[33px] px-3 py-4 flex flex-col gap-y-8 border border-gray-400 '>
       <div className='basis-full flex justify-between'>
-        <Badge text={'Transactions'} count={count} />
-        <AddButton title={'Add transaction'} action={handleAdd} />
+        <Badge text={'Transactions'} count={purchRedempData.length} />
+        <AddButton title={'Add transaction'} action={addFormInstance} />
       </div>
       {purchRedempData.map((purchRedempItem, idx) => (
         <fieldset key={idx} className='flex flex-wrap -mt-4 gap-x-16 gap-y-4'>
@@ -24,7 +52,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
           {idx > 0 && <hr className='w-full' />}
 
           {idx > 0 && <div className='grow shrink basis-full text-right -my-2'>
-            <CloseButton title={'Delete this transaction'} action={() => handleRemove(idx)} />
+            <CloseButton title={'Delete this transaction'} action={() => removeFormInstance(idx)} />
           </div>}
 
           <div className='grow shrink basis-72'>
@@ -34,7 +62,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               name={`purch_RedempTraxType-${idx}`}
               options={purch_redempTraxTypeOptions}
               selectedOption={purchRedempItem.purch_RedempTraxType}
-              onChange={handleChange}
+              onChange={handleInputChange}
             />
           </div>
           <div className='grow shrink basis-72'>
@@ -44,7 +72,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               label='MF (AMC) Name'
               options={mfAmcOptions}
               selectedOption={purchRedempItem.purch_redempMfAmcName}
-              onSelect={handleSelect}
+              onSelect={handleSelectChange}
             />
           </div>
           <div className='grow shrink basis-72'>
@@ -55,7 +83,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               listName='purch_redemp-scheme-names'
               required={true}
               value={purchRedempItem.purch_redempSchemeName}
-              onChange={handleChange}
+              onChange={handleInputChange}
               listOptions={schemeNameOptions}
             />
           </div>
@@ -66,7 +94,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               name={`purch_redempSchemeOption-${idx}`}
               options={schemeOptionOptions}
               selectedOption={purchRedempItem.purch_redempSchemeOption}
-              onChange={handleChange}
+              onChange={handleInputChange}
             />
           </div>
           <div className='grow shrink basis-72'>
@@ -76,7 +104,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               label='Folio'
               options={folioOptions}
               selectedOption={purchRedempItem.purch_redempFolio}
-              onSelect={handleSelect}
+              onSelect={handleSelectChange}
             />
           </div>
           <div className='grow shrink basis-72'>
@@ -86,7 +114,7 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               label='Transaction Units / Amount'
               options={purch_redempTraxUnits_AmountOptions}
               selectedOption={purchRedempItem.purch_redempTransactionUnits_Amount}
-              onSelect={handleSelect}
+              onSelect={handleSelectChange}
             />
           </div>
           <div className=' shrink basis-72'>
@@ -96,10 +124,10 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
               label='Transaction Amount'
               min={1}
               value={purchRedempItem.purch_redempTransactionAmount}
-              onChange={handleChange}
+              onChange={handleInputChange}
             />
           </div>
-          <div className="w-full">
+          {/* <div className="w-full">
             <div className='w-1/2'>
               <TextAreaInput
                 id='purch_redempRemarksByEntryPerson'
@@ -111,10 +139,10 @@ function PurchRedempForm({ purchRedempData, handleChange, handleSelect, handleSu
                 maxLength={500}
                 required={true}
                 value={purchRedempItem.purch_redempRemarksByEntryPerson}
-                onChange={handleChange}
+                onChange={handleInputChange}
               />
             </div>
-          </div>
+          </div> */}
           <div className='absolute bottom-3 right-3'>
             <PrimaryButton text='Save' />
           </div>

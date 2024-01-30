@@ -4,8 +4,21 @@ import RadioInput from './common/RadioInput'
 import InputList from './common/InputList'
 import TextInput from './common/TextInput'
 import { doneByOptions, transactionPrefOptions } from '../utils/optionLists'
+import { useDispatch, useSelector } from 'react-redux'
+import { handleChange } from '../Reducers/CommonDataSlice'
 
-function Header({ commonData, onChange, handleSubmit, submitBtn }) {
+function Header({ handleSubmit, submitBtn }) {
+  // get systematicData state from store
+  const commonData = useSelector(state => state.commonData.value);
+
+  // use useDispatch hook to use reducers 
+  const dispatch = useDispatch();
+
+  // method to handle change in inputs 
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    dispatch(handleChange({name, value}));
+  }
 
   return (
     <div>
@@ -20,7 +33,7 @@ function Header({ commonData, onChange, handleSubmit, submitBtn }) {
             label='Email'
             required={true}
             value={commonData.email}
-            onChange={onChange}
+            onChange={handleInputChange}
             secondItem='@niveshonline.com'
           />
         </div> */}
@@ -31,42 +44,21 @@ function Header({ commonData, onChange, handleSubmit, submitBtn }) {
             name='transactionPreference'
             options={transactionPrefOptions}
             selectedOption={commonData.transactionPreference}
-            onChange={onChange}
-            secondItem='@niveshonline.com'
+            onChange={handleInputChange}
           />
         </div>
 
-        {/* <div className='grow shrink w-80 mt-2'>
-          <InputList
-            id='registrant'
-            label='Entry done by'
-            listName='done-by-members'
-            required={true}
-            value={commonData.registrant}
-            onChange={onChange}
-            listOptions={doneByOptions}
-          />
-        </div> */}
-        <div className='grow shrink w-80'>
-          <TextInput
-            id='panNumber'
-            label='PAN Number'
-            placeHolder='XXXXXXXXXX'
-            required={true}
-            value={commonData.panNumber}
-            onChange={onChange}
-          />
-        </div>
-        <fieldset className='flex grow shrink gap-3'>
+        <fieldset className='flex grow shrink gap-3 mt-3'>
           <legend className='text-gray-800 text-sm text-left'>Investor Name</legend>
           <div className="w-80">
-            <TextInput
+            <InputList
               id='investorFirstName'
               label='First Name'
-              // placeHolder='First Name'
+              listName='investor-names'
               required={true}
               value={commonData.investorFirstName}
-              onChange={onChange}
+              onChange={handleInputChange}
+              listOptions={doneByOptions}
             />
           </div>
           <div className="w-80">
@@ -74,11 +66,36 @@ function Header({ commonData, onChange, handleSubmit, submitBtn }) {
               id='investorLastName'
               label='Last Name (optional)'
               // placeHolder='Last Name'
+              disable={true}
               value={commonData.investorLastName}
-              onChange={onChange}
+              onChange={handleInputChange}
             />
           </div>
         </fieldset>
+
+        <div className='grow shrink w-80 mt-2'>
+          <InputList
+            id='panNumber'
+            label='PAN Number'
+            listName='pan-numbers'
+            placeHolder='XXXXXXXXXX'
+            required={true}
+            value={commonData.panNumber}
+            onChange={handleInputChange}
+            listOptions={doneByOptions}
+          />
+        </div>
+        <div className='grow shrink w-80'>
+          <TextInput
+            id='familyHead'
+            label='Family Head'
+            required={true}
+            disable={true}
+            value={commonData.familyHead}
+            onChange={handleInputChange}
+          />
+        </div>
+        
         <button ref={submitBtn} type='submit' className='hidden'>Submit</button>
       </form>
     </div>

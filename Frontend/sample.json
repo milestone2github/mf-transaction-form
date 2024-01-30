@@ -1,0 +1,76 @@
+{
+  "systematicData": [
+      {
+          "systematicTraxFor": "Pause",
+          "systematicTraxType": "SIP",
+          "systematicSchemeName": "Date Given in Remarks",
+          "systematicMfAmcName": "SBI",
+          "systematicSourceScheme": "",
+          "systematicSchemeOption": "Growth",
+          "systematicFolio": "Create New Folio",
+          "sip_swp_stpAmount": 1,
+          "tenureOfSip_swp_stp": "10000",
+          "sipPauseMonths": "2 Months",
+          "sip_stp_swpDate": "11 to 20",
+          "firstTransactionAmount": 1,
+          "systematicRemarksByEntryPerson": "First systematic transaction"
+      },
+      {
+          "systematicTraxFor": "Registration",
+          "systematicTraxType": "STP",
+          "systematicSchemeName": "ASAP",
+          "systematicMfAmcName": "Axis",
+          "systematicSourceScheme": "",
+          "systematicSchemeOption": "Growth",
+          "systematicFolio": "Create New Folio",
+          "sip_swp_stpAmount": 1,
+          "tenureOfSip_swp_stp": 9999,
+          "sipPauseMonths": "2 Months",
+          "sip_stp_swpDate": "1 to 10",
+          "firstTransactionAmount": "30000",
+          "systematicRemarksByEntryPerson": "second systematic transaction"
+      }
+  ],
+  "purchRedempData": [
+      {
+          "purch_RedempTraxType": "Redemption",
+          "purch_redempMfAmcName": "PNB",
+          "purch_redempSchemeName": "Next Working Day",
+          "purch_redempSchemeOption": "IDCW / Dividend",
+          "purch_redempFolio": "Take Existing Folio",
+          "purch_redempTransactionUnits_Amount": "Amount Given in next question",
+          "purch_redempTransactionAmount": "2000",
+          "purch_redempRemarksByEntryPerson": "first purchase/redemption transaction"
+      },
+      {
+          "purch_RedempTraxType": "Purchase",
+          "purch_redempMfAmcName": "ICICI",
+          "purch_redempSchemeName": "Date Given in Remarks",
+          "purch_redempSchemeOption": "IDCW / Dividend",
+          "purch_redempFolio": "Create New Folio",
+          "purch_redempTransactionUnits_Amount": "Amount Given in next question",
+          "purch_redempTransactionAmount": "50000",
+          "purch_redempRemarksByEntryPerson": "second purchase/redemption transaction"
+      }
+  ],
+  "commonData": {
+      "email": "",
+      "transactionPreference": "ASAP",
+      "registrant": "",
+      "panNumber": "212d22232d",
+      "investorFirstName": "Milestone",
+      "investorLastName": "GPT"
+  },
+  "switchData": [
+      {
+          "switchMfAmcName": "PNB",
+          "switchFromScheme": "Date Given in Remarks",
+          "switchToScheme": "ASAP",
+          "switchSchemeOption": "Growth",
+          "switchFolio": "Create New Folio",
+          "switchTransactionUnits_Amount": "Amount Given in next question",
+          "switchTransactionAmount": "90000",
+          "switchRemarksByEntryPerson": "First switch transaction"
+      }
+  ]
+}

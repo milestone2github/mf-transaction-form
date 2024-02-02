@@ -1,10 +1,8 @@
 import React, { useState } from 'react'
-import { folioOptions, mfAmcOptions, purch_redempTraxTypeOptions, purch_redempTraxUnits_AmountOptions, schemeNameOptions, schemeOptionOptions } from '../utils/optionLists';
 import PreFilledSelect from './common/PreFilledSelect';
 import InputList from './common/InputList';
 import RadioInput from './common/RadioInput';
 import NumberInput from './common/NumberInput';
-import TextAreaInput from './common/TextAreaInput';
 import PrimaryButton from './common/PrimaryButton';
 import Badge from './common/Badge';
 import AddButton from './common/AddButton';
@@ -15,6 +13,17 @@ import { handleAdd, handleChange, handleRemove, handleSelect } from '../Reducers
 function PurchRedempForm({ handleSubmit }) {
   // get purchRedempData state from store
   const purchRedempData = useSelector(state => state.purchRedempData.value);
+
+  // get optionList state from store
+  const {
+    purch_redempTraxTypeOptions, 
+    purch_redempTraxUnits_AmountOptions,
+    amcNameOptions, 
+    schemeNameOptions,
+    schemeOptionOptions,
+    folioOptions, 
+    folioOptionsWithNew 
+  } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers
   const dispatch = useDispatch();
@@ -66,13 +75,15 @@ function PurchRedempForm({ handleSubmit }) {
             />
           </div>
           <div className='grow shrink basis-72'>
-            <PreFilledSelect
+            <InputList
               id='purch_redempMfAmcName'
               index={idx} 
               label='MF (AMC) Name'
-              options={mfAmcOptions}
-              selectedOption={purchRedempItem.purch_redempMfAmcName}
-              onSelect={handleSelectChange}
+              listName='amc-names'
+              required={true}
+              value={purchRedempItem.purch_redempMfAmcName}
+              onChange={handleInputChange}
+              listOptions={amcNameOptions}
             />
           </div>
           <div className='grow shrink basis-72'>
@@ -98,13 +109,19 @@ function PurchRedempForm({ handleSubmit }) {
             />
           </div>
           <div className='grow shrink basis-72'>
-            <PreFilledSelect
+            <InputList
               id='purch_redempFolio'
               index={idx} 
               label='Folio'
-              options={folioOptions}
-              selectedOption={purchRedempItem.purch_redempFolio}
-              onSelect={handleSelectChange}
+              listName='folios'
+              required={true}
+              listOptions={
+                purchRedempItem.purch_RedempTraxType === 'Purchase' ?
+                folioOptionsWithNew :
+                folioOptions
+              }
+              value={purchRedempItem.purch_redempFolio}
+              onChange={handleInputChange}
             />
           </div>
           <div className='grow shrink basis-72'>

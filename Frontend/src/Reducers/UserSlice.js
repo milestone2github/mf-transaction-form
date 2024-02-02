@@ -4,7 +4,7 @@ const userSlice = createSlice({
   name: 'user',
   initialState: {
     isLoading: false,
-    isLoggedIn: false, //make it false
+    isLoggedIn: true, //make it false while deployment
     userData: null,
   },
   reducers: {

@@ -3,13 +3,19 @@ import EmailInput from './common/EmailInput'
 import RadioInput from './common/RadioInput'
 import InputList from './common/InputList'
 import TextInput from './common/TextInput'
-import { doneByOptions, transactionPrefOptions } from '../utils/optionLists'
 import { useDispatch, useSelector } from 'react-redux'
 import { handleChange } from '../Reducers/CommonDataSlice'
 
 function Header({ handleSubmit, submitBtn }) {
   // get systematicData state from store
   const commonData = useSelector(state => state.commonData.value);
+
+  // get optionLists state from store 
+  const { 
+    panOptions, 
+    investorNameOptions, 
+    transactionPrefOptions 
+  } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
@@ -58,7 +64,7 @@ function Header({ handleSubmit, submitBtn }) {
               required={true}
               value={commonData.investorFirstName}
               onChange={handleInputChange}
-              listOptions={doneByOptions}
+              listOptions={investorNameOptions}
             />
           </div>
           <div className="w-80">
@@ -82,7 +88,7 @@ function Header({ handleSubmit, submitBtn }) {
             required={true}
             value={commonData.panNumber}
             onChange={handleInputChange}
-            listOptions={doneByOptions}
+            listOptions={panOptions}
           />
         </div>
         <div className='grow shrink w-80'>

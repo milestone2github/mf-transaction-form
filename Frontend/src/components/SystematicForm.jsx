@@ -4,8 +4,7 @@ import InputList from './common/InputList'
 import TextInput from './common/TextInput'
 import PreFilledSelect from './common/PreFilledSelect'
 import NumberInput from './common/NumberInput'
-import TextAreaInput from './common/TextAreaInput'
-import { folioOptions, mfAmcOptions, schemeNameOptions, schemeOptionOptions, sipPauseMonthsOptions, sip_stp_swpDateOptions, transactionTypeOptions } from '../utils/optionLists'
+// import { folioOptions, mfAmcOptions, schemeNameOptions, schemeOptionOptions, sipPauseMonthsOptions, sip_stp_swpDateOptions, transactionTypeOptions } from '../utils/optionLists'
 import PrimaryButton from './common/PrimaryButton'
 import AddButton from './common/AddButton'
 import Badge from './common/Badge'
@@ -13,40 +12,62 @@ import CloseButton from './common/CloseButton'
 import {useDispatch, useSelector} from 'react-redux'
 import {handleChange, handleSelect, handleAdd, handleRemove} from '../Reducers/SystematicDataSlice'
 
-// list of systematic transaction type 
-let transactionForOptions = new Array('Registration', 'Pause', 'Cancellation')
-
 function SystematicForm({ handleSubmit }) {
-  // const [transactionForOptions, setTransactionForOptions] = useState(['Registration', 'Pause', 'Cancellation']);
-  // const [amcNameOptions, setAmcNameOptions] = useState([]);
-  // const [schemeNameOptions, setSchemeNameOptions] = useState([])
-
   // get systematicData state from store
   const systematicData = useSelector(state => state.systematicData.value);
+
+  // get optionList state from store
+  const {
+    sysTransactionForOptions, 
+    sysTransactionForOptionsWithPause,
+    amcNameOptions, 
+    schemeNameOptions,
+    schemeOptionOptions,
+    sipPauseMonthsOptions,
+    sip_stp_swpDateOptions,
+    transactionTypeOptions,
+    folioOptions,
+    folioOptionsWithNew
+  } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
 
+  // // effect to update transaction For options 
   // useEffect(() => {
-  //   // it is not working 
-  //   if(systematicData.systematicTraxType === 'SIP') {
-  //     transactionOptions = ['Registration', 'Cancellation']
+  //   let options;
+  //   if(systematicData[currentIndex].systematicTraxType !== 'SIP') {
+  //     options = ['Registration', 'Cancellation'];
+  //   } else {
+  //     options = ['Registration', 'Pause', 'Cancellation'];
   //   }
-  //   else {
-  //     transactionOptions = ['Registration', 'Pause', 'Cancellation']
+  //   dispatch(updateSysTransactionFor({options, index: currentIndex}));
+  // }, [systematicData[currentIndex].systematicTraxType]);
+
+  // // effect to update Folio options 
+  // useEffect(() => {
+  //   let options = [...folioOptions[0]];
+  //   if(systematicData[currentIndex].systematicTraxFor === 'Registration') {
+  //     if (options[0] !== 'Create New Folio') {
+  //       options = ['Create New Folio', ...options]
+  //     }
+  //   } else {
+  //     if (options[0] === 'Create New Folio') {
+  //       options = options.slice(1);
+  //     }
   //   }
-  
-  // }, [systematicData.systematicTraxType])
+  //   dispatch(updateFolioOptions({options, index: currentIndex}));
+  // }, [systematicData[currentIndex].systematicTraxFor]);
   
   // method to handle change in inputs 
   const handleInputChange = (event) => {
     const { name, value, dataset: { index } } = event.target;
-    dispatch(handleChange({ name, value, index }));
+    dispatch(handleChange({ name, value, index })); // dispatch the change 
   };
 
   // method to handle change in select menus
   const handleSelectChange = (name, value, index) => {
-    dispatch(handleSelect({ name, value, index }));
+    dispatch(handleSelect({ name, value, index })); // dispatch the change 
   };
 
   // method to add new form instance 
@@ -88,21 +109,28 @@ function SystematicForm({ handleSubmit }) {
                 index={idx}
                 label='Transaction For' 
                 name={`systematicTraxFor-${idx}`}
-                options={transactionForOptions}
+                options={
+                  systematicItem.systematicTraxType === 'SIP' ? 
+                  sysTransactionForOptionsWithPause : 
+                  sysTransactionForOptions
+                }
                 selectedOption={systematicItem.systematicTraxFor}
                 onChange={handleInputChange}
               />
             </div>
             <div className='grow shrink basis-72'>
-              <PreFilledSelect
+              <InputList
                 id='systematicMfAmcName'
                 index={idx}
                 label='MF (AMC) Name'
-                options={mfAmcOptions}
-                selectedOption={systematicItem.systematicMfAmcName}
-                onSelect={handleSelectChange}
+                listName='amc-names'
+                required={true}
+                value={systematicItem.systematicMfAmcName}
+                listOptions={amcNameOptions}
+                onChange={handleInputChange}
               />
             </div>
+            {['SIP', 'STP', 'Capital Appreciation STP'].includes(systematicItem.systematicTraxType) && 
             <div className='grow shrink basis-72'>
               <InputList
                 id='systematicSchemeName'
@@ -114,16 +142,20 @@ function SystematicForm({ handleSubmit }) {
                 onChange={handleInputChange}
                 listOptions={schemeNameOptions}
               />
-            </div>
+            </div>}
+            {systematicItem.systematicTraxType !== 'SIP' &&
             <div className='grow shrink basis-72'>
-              <TextInput
+              <InputList
                 id='systematicSourceScheme'
                 index={idx}
-                label='Source Scheme (optional)'
+                label='Source Scheme'
+                listName='systematic-source-schemes'
+                required={true}
                 value={systematicItem.systematicSourceScheme}
                 onChange={handleInputChange}
+                listOptions={schemeNameOptions}
               />
-            </div>
+            </div>}
             <div className='grow shrink basis-72'>
               <RadioInput
                 index={idx}
@@ -135,20 +167,31 @@ function SystematicForm({ handleSubmit }) {
               />
             </div>
             <div className='grow shrink basis-72'>
-              <PreFilledSelect
+              <InputList
                 id='systematicFolio'
                 index={idx}
                 label='Folio'
-                options={folioOptions}
-                selectedOption={systematicItem.systematicFolio}
-                onSelect={handleSelectChange}
+                listOptions={
+                  systematicItem.systematicTraxFor === 'Registration' ?
+                  folioOptionsWithNew :
+                  folioOptions
+                }
+                listName='folios'
+                required={true}
+                value={systematicItem.systematicFolio}
+                onChange={handleInputChange}
               />
             </div>
             <div className='grow shrink basis-72'>
               <NumberInput
                 id='sip_swp_stpAmount'
                 index={idx}
-                label='SIP / SWP / STP Amount'
+                label={`${
+                  systematicItem.systematicTraxType === 'SIP' ?
+                  'SIP' : 
+                  ['SWP', 'Capital Appreciation SWP'].includes(systematicItem.systematicTraxType) ? 
+                  'SWP': 'STP'
+                } Amount`}
                 min={1}
                 required={true}
                 value={systematicItem.sip_swp_stpAmount}
@@ -159,13 +202,20 @@ function SystematicForm({ handleSubmit }) {
               <NumberInput
                 id='tenureOfSip_swp_stp'
                 index={idx}
-                label='Tenure of SIP / SWP / STP'
+                label={`Tenure of ${
+                  systematicItem.systematicTraxType === 'SIP' ?
+                  'SIP' : 
+                  ['SWP', 'Capital Appreciation SWP'].includes(systematicItem.systematicTraxType) ? 
+                  'SWP': 'STP'
+                }`}
                 min={1}
                 value={systematicItem.tenureOfSip_swp_stp}
                 onChange={handleInputChange}
               />
             </div>
-            <div className='grow shrink basis-72'>
+            {systematicItem.systematicTraxFor === 'Pause' && 
+            systematicItem.systematicTraxType === 'SIP' &&
+            <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
               <PreFilledSelect
                 id='sipPauseMonths'
                 index={idx}
@@ -174,17 +224,23 @@ function SystematicForm({ handleSubmit }) {
                 selectedOption={systematicItem.sipPauseMonths}
                 onSelect={handleSelectChange}
               />
-            </div>
-            <div className='grow shrink basis-72'>
+            </div>}
+            <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
               <PreFilledSelect
                 id='sip_stp_swpDate'
-                index={idx} label='SIP / SWP / STP Date'
+                index={idx} 
+                label={`${
+                  systematicItem.systematicTraxType === 'SIP' ?
+                  'SIP' : 
+                  ['SWP', 'Capital Appreciation SWP'].includes(systematicItem.systematicTraxType) ? 
+                  'SWP': 'STP'
+                } Date`}
                 options={sip_stp_swpDateOptions}
                 selectedOption={systematicItem.sip_stp_swpDate}
                 onSelect={handleSelectChange}
               />
             </div>
-            <div className='grow shrink basis-72'>
+            <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
               <NumberInput
                 id='firstTransactionAmount'
                 index={idx}

@@ -1,10 +1,8 @@
 import React, { useState } from 'react'
-import { folioOptions, mfAmcOptions, schemeNameOptions, schemeOptionOptions, switchTraxUnits_AmountOptions } from '../utils/optionLists';
 import RadioInput from './common/RadioInput';
 import InputList from './common/InputList';
 import PreFilledSelect from './common/PreFilledSelect';
 import NumberInput from './common/NumberInput';
-import TextAreaInput from './common/TextAreaInput';
 import PrimaryButton from './common/PrimaryButton';
 import Badge from './common/Badge';
 import AddButton from './common/AddButton';
@@ -15,6 +13,15 @@ import { handleAdd, handleChange, handleRemove, handleSelect } from '../Reducers
 function SwitchForm({ handleSubmit }) {
   // get switchData state from store 
   const switchData = useSelector(state => state.switchData.value);
+
+  // get optionList state from store
+  const {
+    switchTraxUnits_AmountOptions,
+    amcNameOptions, 
+    schemeNameOptions,
+    schemeOptionOptions,
+    folioOptions
+  } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
@@ -56,13 +63,15 @@ function SwitchForm({ handleSubmit }) {
           </div>}
 
           <div className='grow shrink basis-72'>
-            <PreFilledSelect
+            <InputList
               id='switchMfAmcName'
               index={idx} 
               label='MF (AMC) Name'
-              options={mfAmcOptions}
-              selectedOption={switchItem.switchMfAmcName}
-              onSelect={handleSelectChange}
+              required={true}
+              listName='amc-names'
+              listOptions={amcNameOptions}
+              value={switchItem.switchMfAmcName}
+              onChange={handleInputChange}
             />
           </div>
           <div className='grow shrink basis-72'>
@@ -100,13 +109,15 @@ function SwitchForm({ handleSubmit }) {
             />
           </div>
           <div className='grow shrink basis-72'>
-            <PreFilledSelect
+            <InputList
               id='switchFolio'
               index={idx} 
               label='Folio'
-              options={folioOptions}
-              selectedOption={switchItem.switchFolio}
-              onSelect={handleSelectChange}
+              required={true}
+              listName='folios'
+              listOptions={folioOptions}
+              value={switchItem.switchFolio}
+              onChange={handleInputChange}
             />
           </div>
           <div className='grow shrink basis-72'>

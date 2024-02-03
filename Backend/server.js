@@ -100,36 +100,72 @@ app.post("/api/data", async (req, res) => {
   try {
     await mongoClient.connect();
     const database = mongoClient.db("mftransactiondb");
-    const collection = database.collection("data mf transaction");
 
     let formData = req.body.formData;
+    let results = [];
 
-    // Check if formData is an array and convert it to JSON object
-    if (Array.isArray(formData)) {
-      formData = { data: formData }; // or any other logic to convert array to object
+    if (formData.purchRedempData) {
+      const combinedRedemption = Object.assign(
+        {},
+        formData.commonData,
+        formData.purchRedempData
+      );
+      const collection = database.collection("predemption");
+      const resp = await collection.insertOne(combinedRedemption);
+      if (resp.acknowledged) {
+        console.log(
+          "Data stored successfully in predemption:",
+          combinedRedemption
+        );
+        results.push({ message: "Data stored successfully in predemption" });
+      }
     }
 
-    const result = await collection.insertOne(formData);
+    if (formData.switchData) {
+      const combinedSwitch = Object.assign(
+        {},
+        formData.commonData,
+        formData.switchData
+      );
+      const collection = database.collection("Switch");
+      const resswit = await collection.insertOne(combinedSwitch);
+      if (resswit.acknowledged) {
+        console.log("Data stored successfully in Switch:", combinedSwitch);
+        results.push({ message: "Data stored successfully in Switch" });
+      }
+    }
 
-    if (result.acknowledged) {
-      console.log("Data stored successfully:", formData);
-      res.status(200).json({ message: "Data stored successfully" });
+    if (formData.systematicData) {
+      const combinedSystamatic = Object.assign(
+        {},
+        formData.commonData,
+        formData.systematicData
+      );
+      const collection = database.collection("systamatic");
+      const ressys = await collection.insertOne(combinedSystamatic);
+      if (ressys.acknowledged) {
+        console.log(
+          "Data stored successfully in systamatic:",
+          combinedSystamatic
+        );
+        results.push({ message: "Data stored successfully in systamatic" });
+      }
+    }
+
+    if (results.length > 0) {
+      return res.status(200).json(results);
     } else {
-      throw new Error("Data insertion failed");
+      return res
+        .status(400)
+        .json({ message: "No valid data provided for insertion" });
     }
   } catch (error) {
     console.error("Error during data insertion", error);
-    res.status(500).send("Error during data insertion");
+    return res.status(500).send("Error during data insertion");
   } finally {
     await mongoClient.close();
   }
 });
-
-// app.post("/api/data", (req, res) => {
-//   console.log(req.body.formData);
-//   console.log("##############");
-//   res.status(200).json({ message: "Data received successfully" });
-// });
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));

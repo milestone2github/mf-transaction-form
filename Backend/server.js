@@ -4,7 +4,7 @@ const axios = require("axios");
 const express = require("express");
 const path = require("path");
 const app = express();
-const port = 5000;
+const port = 3000;
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
 
@@ -12,11 +12,8 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, "../frontend/dist")));
-const mongoClient = new MongoClient(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+// app.use(express.static(path.join(__dirname, "../frontend/dist")));
+const mongoClient = new MongoClient(process.env.MONGO_URI);
 app.get("/api/common", async (req, res) => {
   try {
     await mongoClient.connect();
@@ -89,6 +86,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
       }
     );
 
+    console.log('zoho response: ', response);
     res.redirect("/");
   } catch (error) {
     console.error("Error during authentication", error);
@@ -168,9 +166,10 @@ app.post("/api/data", async (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  res.send('Hello Express Node')
+  // res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
 app.listen(port, () =>
-  console.log(`Server running on port ${port} www.localhost:5000/`)
+  console.log(`Server running on http://localhost:${port} `)
 );

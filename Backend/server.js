@@ -19,18 +19,14 @@ app.get("/api/common", async (req, res) => {
     await mongoClient.connect();
     const database = mongoClient.db("Milestone");
     const collection = database.collection("MintDb");
-
-    const query = { name: req.query.name };
-    const result = await collection.findOne(query);
+    if (!req.body.query.NAME) {
+      return res.status(400).send("Name parameter is required");
+    }
+    const query = { NAME: new RegExp(req.body.query.NAME, "i") };
+    const result = await collection.find(query).toArray();
 
     if (result) {
-      const transformedResult = {
-        common: `${result.PAN} / ${result.NAME} / ${result["FAMILY HEAD"]}`,
-        pan: result.PAN,
-        name: result.NAME,
-        "family head": result["FAMILY HEAD"],
-      };
-      res.status(200).json(transformedResult);
+      res.status(200).json(result);
     } else {
       res.status(404).send("No matching documents found");
     }
@@ -48,8 +44,9 @@ app.get("/api/schemename", async (req, res) => {
     const database = mongoClient.db("Milestone");
     const collection = database.collection("schemeDB");
 
-    const query = { name: req.query.name };
-    const result = await collection.findOne(query);
+    // const query = { type: req.body.query.type };
+    const query = { type: new RegExp(req.body.query.type, "i") };
+    const result = await collection.find(query).toArray();
 
     if (result) {
       res.status(200).json(result);
@@ -102,51 +99,64 @@ app.post("/api/data", async (req, res) => {
     let formData = req.body.formData;
     let results = [];
 
-    if (formData.purchRedempData) {
-      const combinedRedemption = Object.assign(
-        {},
-        formData.commonData,
-        formData.purchRedempData
-      );
-      const collection = database.collection("predemption");
-      const resp = await collection.insertOne(combinedRedemption);
-      if (resp.acknowledged) {
-        console.log(
-          "Data stored successfully in predemption:",
-          combinedRedemption
-        );
-        results.push({ message: "Data stored successfully in predemption" });
-      }
-    }
-
-    if (formData.switchData) {
-      const combinedSwitch = Object.assign(
-        {},
-        formData.commonData,
-        formData.switchData
-      );
-      const collection = database.collection("Switch");
-      const resswit = await collection.insertOne(combinedSwitch);
-      if (resswit.acknowledged) {
-        console.log("Data stored successfully in Switch:", combinedSwitch);
-        results.push({ message: "Data stored successfully in Switch" });
-      }
-    }
-
     if (formData.systematicData) {
-      const combinedSystamatic = Object.assign(
-        {},
-        formData.commonData,
-        formData.systematicData
-      );
       const collection = database.collection("systamatic");
-      const ressys = await collection.insertOne(combinedSystamatic);
-      if (ressys.acknowledged) {
-        console.log(
-          "Data stored successfully in systamatic:",
-          combinedSystamatic
+      for (let i = 0; i < formData.systematicData.length; i++) {
+        const combinedSystamatic = Object.assign(
+          {},
+          formData.commonData,
+          formData.systematicData[i]
         );
-        results.push({ message: "Data stored successfully in systamatic" });
+        const ressys = await collection.insertOne(combinedSystamatic);
+        if (ressys.acknowledged) {
+          // console.log(
+          //   "Data stored successfully in systamatic:",
+          //   combinedSystamatic
+          // );
+          results.push({
+            message: "Data stored successfully in systamatic",
+            formsub: i,
+          });
+        }
+      }
+    }
+    if (formData.purchRedempData) {
+      const collection = database.collection("predemption");
+      for (let i = 0; i < formData.purchRedempData.length; i++) {
+        const combinedRedemption = Object.assign(
+          {},
+          formData.commonData,
+          formData.purchRedempData[i]
+        );
+        const resp = await collection.insertOne(combinedRedemption);
+        if (resp.acknowledged) {
+          // console.log(
+          //   "Data stored successfully in predemption:",
+          //   combinedRedemption
+          // );
+          results.push({
+            message: "Data stored successfully in predemption",
+            formsub: i,
+          });
+        }
+      }
+    }
+    if (formData.switchData) {
+      const collection = database.collection("Switch");
+      for (let i = 0; i < formData.switchData.length; i++) {
+        const combinedSwitch = Object.assign(
+          {},
+          formData.commonData,
+          formData.switchData[0]
+        );
+        const resswit = await collection.insertOne(combinedSwitch);
+        if (resswit.acknowledged) {
+          // console.log("Data stored successfully in Switch:", combinedSwitch);
+          results.push({
+            message: "Data stored successfully in Switch",
+            formsub: i,
+          });
+        }
       }
     }
 

@@ -22,18 +22,14 @@ app.get("/api/common", async (req, res) => {
     await mongoClient.connect();
     const database = mongoClient.db("Milestone");
     const collection = database.collection("MintDb");
-
-    const query = { name: req.query.name };
-    const result = await collection.findOne(query);
+    if (!req.body.query.NAME) {
+      return res.status(400).send("Name parameter is required");
+    }
+    const query = { NAME: new RegExp(req.body.query.NAME, "i") };
+    const result = await collection.find(query).toArray();
 
     if (result) {
-      const transformedResult = {
-        common: `${result.PAN} / ${result.NAME} / ${result["FAMILY HEAD"]}`,
-        pan: result.PAN,
-        name: result.NAME,
-        "family head": result["FAMILY HEAD"],
-      };
-      res.status(200).json(transformedResult);
+      res.status(200).json(result);
     } else {
       res.status(404).send("No matching documents found");
     }
@@ -51,8 +47,9 @@ app.get("/api/schemename", async (req, res) => {
     const database = mongoClient.db("Milestone");
     const collection = database.collection("schemeDB");
 
-    const query = { name: req.query.name };
-    const result = await collection.findOne(query);
+    // const query = { type: req.body.query.type };
+    const query = { type: new RegExp(req.body.query.type, "i") };
+    const result = await collection.find(query).toArray();
 
     if (result) {
       res.status(200).json(result);

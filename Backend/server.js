@@ -1,69 +1,48 @@
 require("dotenv").config();
-
 const axios = require("axios");
 const express = require("express");
 const path = require("path");
-const app = express();
-const port = 5000;
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
 
+const app = express();
+const port = 5000;
+
 app.use(cors());
-
 app.use(express.json());
-
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+// Initialize MongoDB Client
 const mongoClient = new MongoClient(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-app.get("/api/common", async (req, res) => {
+
+let db;
+
+// Connect to MongoDB
+async function connectToMongoDB() {
   try {
     await mongoClient.connect();
-    const database = mongoClient.db("Milestone");
-    const collection = database.collection("MintDb");
-    if (!req.body.query.NAME) {
-      return res.status(400).send("Name parameter is required");
-    }
-    const query = { NAME: new RegExp(req.body.query.NAME, "i") };
-    const result = await collection.find(query).toArray();
-
-    if (result) {
-      res.status(200).json(result);
-    } else {
-      res.status(404).send("No matching documents found");
-    }
+    db = mongoClient.db("Milestone");
+    db2 = mongoClient.db("mftransactiondb");
+    console.log("Connected to MongoDB");
   } catch (error) {
-    console.error("Error during database lookup", error);
-    res.status(500).send("Error during database lookup");
-  } finally {
-    await mongoClient.close();
+    console.error("Could not connect to MongoDB", error);
+    process.exit(1);
   }
-});
+}
 
-app.get("/api/schemename", async (req, res) => {
-  try {
-    await mongoClient.connect();
-    const database = mongoClient.db("Milestone");
-    const collection = database.collection("schemeDB");
+// Middleware to provide db access
+function dbAccess(req, res, next) {
+  req.db = db;
+  req.db2 = db2;
+  next();
+}
 
-    // const query = { type: req.body.query.type };
-    const query = { type: new RegExp(req.body.query.type, "i") };
-    const result = await collection.find(query).toArray();
+app.use(dbAccess); // Use the middleware
 
-    if (result) {
-      res.status(200).json(result);
-    } else {
-      res.status(404).send("No matching documents found");
-    }
-  } catch (error) {
-    console.error("Error during database lookup", error);
-    res.status(500).send("Error during database lookup");
-  } finally {
-    await mongoClient.close();
-  }
-});
-
+// Now, in your route handlers, you can access the database connection via `req.db`
 app.get("/auth/zoho", (req, res) => {
   const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=Aaaserver.profile.Read&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
   res.redirect(authUrl);
@@ -93,14 +72,52 @@ app.get("/auth/zoho/callback", async (req, res) => {
   }
 });
 
+// Assuming you have already set up the MongoDB connection and middleware as described previously
+
+app.get("/api/common", async (req, res) => {
+  try {
+    const collection = req.db.collection("MintDb");
+    if (!req.body.query.NAME) {
+      return res.status(400).send("Name parameter is required");
+    }
+    const query = { NAME: new RegExp(req.body.query.NAME, "i") };
+    const result = await collection.find(query).toArray();
+
+    if (result.length > 0) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).send("No matching documents found");
+    }
+  } catch (error) {
+    console.error("Error during database lookup", error);
+    res.status(500).send("Error during database lookup");
+  }
+});
+
+app.get("/api/schemename", async (req, res) => {
+  try {
+    const collection = req.db.collection("schemeDB");
+    const query = { type: new RegExp(req.body.query.type, "i") };
+    const result = await collection.find(query).toArray();
+
+    if (result.length > 0) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).send("No matching documents found");
+    }
+  } catch (error) {
+    console.error("Error during database lookup", error);
+    res.status(500).send("Error during database lookup");
+  }
+});
+
+// The Zoho authentication routes remain unchanged as they do not interact with MongoDB
+
 app.post("/api/data", async (req, res) => {
   try {
-    await mongoClient.connect();
-    const database = mongoClient.db("mftransactiondb");
-
+    const database = req.db2; // Use the db instance from the middleware
     let formData = req.body.formData;
     let results = [];
-
     if (formData.systematicData) {
       const collection = database.collection("systamatic");
       for (let i = 0; i < formData.systematicData.length; i++) {
@@ -162,25 +179,26 @@ app.post("/api/data", async (req, res) => {
       }
     }
 
+
     if (results.length > 0) {
-      return res.status(200).json(results);
+      res.status(200).json(results);
     } else {
-      return res
-        .status(400)
-        .json({ message: "No valid data provided for insertion" });
+      res.status(400).json({ message: "No valid data provided for insertion" });
     }
   } catch (error) {
     console.error("Error during data insertion", error);
-    return res.status(500).send("Error during data insertion");
-  } finally {
-    await mongoClient.close();
+    res.status(500).send("Error during data insertion");
   }
 });
+
+// The catch-all route and server listen call remain unchanged
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-app.listen(port, () =>
-  console.log(`Server running on port ${port} www.localhost:5000/`)
-);
+// Start the server and connect to MongoDB
+app.listen(port, async () => {
+  await connectToMongoDB();
+  console.log(`Server running on port ${port} www.localhost:5000/`);
+});

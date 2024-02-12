@@ -27,6 +27,7 @@ async function connectToMongoDB() {
     await mongoClient.connect();
     db = mongoClient.db("Milestone");
     db2 = mongoClient.db("mftransactiondb");
+    db3 = mongoClient.db("mftransactiondb");
     console.log("Connected to MongoDB");
   } catch (error) {
     console.error("Could not connect to MongoDB", error);
@@ -97,17 +98,45 @@ app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
     const {name} = req.query;
-    if (!name) {
-      return res.status(400).send("Name parameter is required");
+    const {pan} = req.query;
+    const {fh} = req.query;
+    console.log(name);
+    if (!name && !pan && !fh) {
+      return res.status(400).send("name, pan or fh parameter is required");
     }
-    const query = { NAME: new RegExp(name, "i") };
+    var query;
+    if (name) {
+      query = { NAME: new RegExp(name, "i") }
+    }
+    if (pan) {
+      query = { PAN: pan }
+    }
+    if (fh) {
+      query = { "FAMILY HEAD": new RegExp(fh, "i") }
+    }
     const result = await collection.find(query).toArray();
+    res.status(200).json(result);
     
-    if (result.length > 0) {
-      res.status(200).json(result);
-    } else {
-      res.status(404).send("No matching documents found");
+  } catch (error) {
+    console.error("Error fetching investors", error);
+    res.status(500).send("Error while fetching investors");
+  }
+});
+
+app.get("/api/folio", async (req, res) => {
+  try {
+    const collection = req.db.collection("MintDb");
+    const {pan} = req.query;
+    if (!pan) {
+      return res.status(400).send("pan parameter is required");
     }
+    var query;
+    if (pan) {
+      query = { PAN: pan }
+    }
+    const result = await collection.find(query).toArray();
+    res.status(200).json(result);
+    
   } catch (error) {
     console.error("Error fetching investors", error);
     res.status(500).send("Error while fetching investors");
@@ -119,12 +148,18 @@ app.get("/api/schemename", async (req, res) => {
     const collection = req.db.collection("schemeDB");
     const query = { type: new RegExp(req.body.query.type, "i") };
     const result = await collection.find(query).toArray();
-
-    if (result.length > 0) {
-      res.status(200).json(result);
-    } else {
-      res.status(404).send("No matching documents found");
-    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error during database lookup", error);
+    res.status(500).send("Error during database lookup");
+  }
+});
+app.get("/api/amc", async (req, res) => {
+  try {
+    const collection = req.db.collection("amc");
+    const query = { type: new RegExp(req.body.query.type, "i") };
+    const result = await collection.find(query).toArray();
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error during database lookup", error);
     res.status(500).send("Error during database lookup");

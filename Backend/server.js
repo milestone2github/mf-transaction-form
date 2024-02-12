@@ -75,7 +75,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
 });
 
 // Assuming you have already set up the MongoDB connection and middleware as described previously
-// endpoint to add investor data to mongodb 
+// endpoint to add investor data to mongodb
 // app.post("/api/investors", async (req, res) => {
 //   try {
 //     const collection = req.db.collection("MintDb");
@@ -97,26 +97,25 @@ app.get("/auth/zoho/callback", async (req, res) => {
 app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
-    const {name} = req.query;
-    const {pan} = req.query;
-    const {fh} = req.query;
+    const { name } = req.query;
+    const { pan } = req.query;
+    const { fh } = req.query;
     console.log(name);
     if (!name && !pan && !fh) {
       return res.status(400).send("name, pan or fh parameter is required");
     }
     var query;
     if (name) {
-      query = { NAME: new RegExp(name, "i") }
+      query = { NAME: new RegExp(name, "i") };
     }
     if (pan) {
-      query = { PAN: pan }
+      query = { PAN: pan };
     }
     if (fh) {
-      query = { "FAMILY HEAD": new RegExp(fh, "i") }
+      query = { "FAMILY HEAD": new RegExp(fh, "i") };
     }
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
-    
   } catch (error) {
     console.error("Error fetching investors", error);
     res.status(500).send("Error while fetching investors");
@@ -125,18 +124,17 @@ app.get("/api/investors", async (req, res) => {
 
 app.get("/api/folio", async (req, res) => {
   try {
-    const collection = req.db.collection("MintDb");
-    const {pan} = req.query;
+    const collection = req.db.collection("MintDb2");
+    const { pan } = req.query;
     if (!pan) {
       return res.status(400).send("pan parameter is required");
     }
     var query;
     if (pan) {
-      query = { PAN: pan }
+      query = { pan: pan };
     }
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
-    
   } catch (error) {
     console.error("Error fetching investors", error);
     res.status(500).send("Error while fetching investors");
@@ -233,7 +231,6 @@ app.post("/api/data", async (req, res) => {
         }
       }
     }
-
 
     if (results.length > 0) {
       res.status(200).json(results);

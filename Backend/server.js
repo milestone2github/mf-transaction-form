@@ -19,6 +19,7 @@ const mongoClient = new MongoClient(process.env.MONGO_URI, {
 });
 
 let db;
+let db2;
 
 // Connect to MongoDB
 async function connectToMongoDB() {
@@ -73,24 +74,43 @@ app.get("/auth/zoho/callback", async (req, res) => {
 });
 
 // Assuming you have already set up the MongoDB connection and middleware as described previously
+// endpoint to add investor data to mongodb 
+// app.post("/api/investors", async (req, res) => {
+//   try {
+//     const collection = req.db.collection("MintDb");
+//     const data = req.body;
+//     console.log(typeof data);
+//     // const result = await collection.deleteMany({'PAN' : {$exists: false}});
+//     const result = await collection.insertMany(data)
+//     if (result) {
+//       res.status(200).json(result);
+//     } else {
+//       res.status(404).send("No documents inserted");
+//     }
+//   } catch (error) {
+//     console.error("Error during inserting investor data", error);
+//     res.status(500).send("Error during inserting investor data");
+//   }
+// });
 
-app.get("/api/common", async (req, res) => {
+app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
-    if (!req.body.query.NAME) {
+    const {name} = req.query;
+    if (!name) {
       return res.status(400).send("Name parameter is required");
     }
-    const query = { NAME: new RegExp(req.body.query.NAME, "i") };
+    const query = { NAME: new RegExp(name, "i") };
     const result = await collection.find(query).toArray();
-
+    
     if (result.length > 0) {
       res.status(200).json(result);
     } else {
       res.status(404).send("No matching documents found");
     }
   } catch (error) {
-    console.error("Error during database lookup", error);
-    res.status(500).send("Error during database lookup");
+    console.error("Error fetching investors", error);
+    res.status(500).send("Error while fetching investors");
   }
 });
 

@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { fetchAmcNameOptions, fetchFolioOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction';
+import { fetchAmcNameOptions, fetchFolioOptions, fetchInvestorData, fetchSchemeNameOptions } from '../Actions/OptionListsAction';
 
 const optionListsSlice = createSlice({
   name: 'optionLists',
@@ -56,59 +56,27 @@ const optionListsSlice = createSlice({
     purch_redempTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Redeem All Units', 'Units Mentioned in Remarks', 'Unlocked Units'],
     switchTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Switch All Units', 'Units Mentioned in Remarks', 'Unlocked Units']
   },
-  reducers: {
-    // updateSysTransactionFor: (state, action) => {
-    //   const { options, index } = action.payload;
-    //   console.log(options, index)
-    //   state.sysTransactionForOptions[index] = options;
-    // },
-    // updateFolioOptions: (state, action) => {
-    //   const { options, index } = action.payload;
-    //   console.log(options, index)
-    //   state.folioOptions[index] = options;
-    // },
-    // addSysOptionsInstance: (state) => {
-    //   state.sysTransactionForOptions.push(['Registration', 'Pause', 'Cancellation']);
+  extraReducers: (builder) => { 
+    builder.addCase(fetchInvestorData.fulfilled, (state, action) => {
+      const investorOptions = action.payload.map(investor => (
+        `${investor['NAME']} / ${investor['PAN']} / ${investor['FAMILY HEAD']}`
+      ))
+      state.investorNameOptions = investorOptions;
+    });
 
-    //   let existingFolioOptions = [...state.folioOptions[0]]
-    //   if (existingFolioOptions[0] === 'Create New Folio') {
-    //     existingFolioOptions = existingFolioOptions.slice(1)
-    //   }
-    //   state.folioOptions.push(['Create New Folio', ...existingFolioOptions])
-    // },
-    // removeSysOptionsInstance: (state, action) => {
-    //   const index = action.payload;
-    //   if (index >= 0 && index < state.sysTransactionForOptions.length) {
-    //     state.sysTransactionForOptions.splice(index, 1); // Remove the item at the specified index
-    //     state.folioOptions.splice(index, 1); // Remove the item at the specified index
-    //   }
-    // },
-    // addPurchRedempOptionsInstance: (state) => {
-    //   let existingFolioOptions = [...state.folioOptions[0]]
-    //   if (existingFolioOptions[0] === 'Create New Folio') {
-    //     existingFolioOptions = existingFolioOptions.slice(1)
-    //   }
-    //   state.folioOptions.push(['Create New Folio', ...existingFolioOptions])
-    // },
-    // removePurchRedempOptionsInstance: (state, action) => {
-    //   const index = action.payload;
-    //   if (index >= 0 && index < state.folioOptions.length) {
-    //     state.sysTransactionForOptions.splice(index, 1); // Remove the item at the specified index
-    //     state.folioOptions.splice(index, 1); // Remove the item at the specified index
-    //   }
-    // },
-    extraReducers: {
-      [fetchAmcNameOptions.fulfilled]: (state, action) => {
-        state.amcNameOptions = action.payload;
-      },
-      [fetchFolioOptions.fulfilled]: (state, action) => {
-        state.folioOptions = action.payload;
-        state.folioOptionsWithNew = [...state.folioOptionsWithNew, action.payload];
-      },
-      [fetchSchemeNameOptions.fulfilled]: (state, action) => {
-        state.schemeNameOptions = action.payload;
-      }
-    }
+    builder.addCase(fetchAmcNameOptions.fulfilled, (state, action) => {
+      state.amcNameOptions = action.payload;
+    });
+
+    builder.addCase(fetchFolioOptions.fulfilled, (state, action) => {
+      state.folioOptions = action.payload;
+      state.folioOptionsWithNew = ['Create New Folio', ...action.payload];
+      state.folioOptions = action.payload;
+    });
+    
+    builder.addCase(fetchSchemeNameOptions.fulfilled, (state, action) => {
+      state.schemeNameOptions = action.payload;
+    });
   }
 })
 

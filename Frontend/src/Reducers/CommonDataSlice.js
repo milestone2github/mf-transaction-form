@@ -8,8 +8,7 @@ const commonDataSlice = createSlice({
             transactionPreference: 'ASAP',
             registrant: '',
             panNumber: '',
-            investorFirstName: '',
-            investorLastName: '',
+            investorName: '',
             familyHead: ''
         }
     },

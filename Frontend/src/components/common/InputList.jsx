@@ -13,7 +13,8 @@ function InputList({
   maxLength, 
   required, 
   disable, 
-  pattern 
+  pattern, 
+  customHandleChange
 }) {
 
   const [inputValue, setInputValue] = useState(value);
@@ -25,12 +26,19 @@ function InputList({
   const handleChange = (event) => {
     const newValue = event.target.value;
     setInputValue(newValue); // Always update the inputValue state
+    if(customHandleChange) {
+      customHandleChange(event)
+      return;
+    }
     if(listOptions.includes(newValue)) {
       onChange(event)
     }
   };
 
   const handleBlur = (event) => {
+    if(customHandleChange) {
+      return;
+    }
     const newValue = event.target.value;
     const dataset = event.target.dataset;
     if (!listOptions.includes(newValue)) {

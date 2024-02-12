@@ -11,6 +11,7 @@ import Badge from './common/Badge'
 import CloseButton from './common/CloseButton'
 import {useDispatch, useSelector} from 'react-redux'
 import {handleChange, handleSelect, handleAdd, handleRemove} from '../Reducers/SystematicDataSlice'
+import { fetchAmcNameOptions, fetchFolioOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction'
 
 function SystematicForm({ handleSubmit }) {
   // get systematicData state from store
@@ -33,31 +34,12 @@ function SystematicForm({ handleSubmit }) {
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
 
-  // // effect to update transaction For options 
+  // // effect to fetch amc name options 
   // useEffect(() => {
-  //   let options;
-  //   if(systematicData[currentIndex].systematicTraxType !== 'SIP') {
-  //     options = ['Registration', 'Cancellation'];
-  //   } else {
-  //     options = ['Registration', 'Pause', 'Cancellation'];
-  //   }
-  //   dispatch(updateSysTransactionFor({options, index: currentIndex}));
-  // }, [systematicData[currentIndex].systematicTraxType]);
-
-  // // effect to update Folio options 
-  // useEffect(() => {
-  //   let options = [...folioOptions[0]];
-  //   if(systematicData[currentIndex].systematicTraxFor === 'Registration') {
-  //     if (options[0] !== 'Create New Folio') {
-  //       options = ['Create New Folio', ...options]
-  //     }
-  //   } else {
-  //     if (options[0] === 'Create New Folio') {
-  //       options = options.slice(1);
-  //     }
-  //   }
-  //   dispatch(updateFolioOptions({options, index: currentIndex}));
-  // }, [systematicData[currentIndex].systematicTraxFor]);
+  //   dispatch(fetchAmcNameOptions())
+  //   dispatch(fetchSchemeNameOptions())
+  //   dispatch(fetchFolioOptions())
+  // }, []);
   
   // method to handle change in inputs 
   const handleInputChange = (event) => {
@@ -75,7 +57,7 @@ function SystematicForm({ handleSubmit }) {
     dispatch(handleAdd());
   }
 
-  // method to delete existing form instance at specied index 
+  // method to delete existing form instance at specified index 
   const removeFormInstance = (index) => {
     dispatch(handleRemove(index));
   }

@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import EmailInput from './common/EmailInput'
 import RadioInput from './common/RadioInput'
 import InputList from './common/InputList'
 import TextInput from './common/TextInput'
 import { useDispatch, useSelector } from 'react-redux'
 import { handleChange } from '../Reducers/CommonDataSlice'
+import { fetchInvestorData } from '../Actions/OptionListsAction'
+import CustomInputDatalist from './common/CustomInputDatalist'
 
 function Header({ handleSubmit, submitBtn }) {
   // get systematicData state from store
@@ -20,9 +22,54 @@ function Header({ handleSubmit, submitBtn }) {
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
 
+  // effect to fetch investor data 
+  useEffect(() => {
+    dispatch(fetchInvestorData())
+    .then((action) => {
+      // This will log the action after it's been dispatched and processed
+      console.log("Dispatched fetchInvestorData:", action);
+    })
+    .catch(error => {
+      console.error("Error while fetching investor data:", error);
+    });
+  
+  }, [])
+
+  const handleNameChange = (event) => {
+    const { name, value } = event.target;
+
+    // if(investorNameOptions.includes(value)){
+    let investorData = value.split('/').map(item => item.trim());
+    if(investorData.length > 1) {
+      dispatch(handleChange({name, value: investorData[0]}));
+      dispatch(handleChange({name:'panNumber', value: investorData[1]}));
+      dispatch(handleChange({name:'familyHead', value: investorData[2]}));
+      return;
+    }
+    dispatch(handleChange({name, value: investorData[0]}));
+  }
+
+  const handlePanChange = (event) => {
+    const { name, value } = event.target;
+
+    // if(investorNameOptions.includes(value)){
+    let investorData = value.split('/').map(item => item.trim());
+    console.log(investorData)
+    if(investorData.length > 1) {
+      console.log('greater')
+      dispatch(handleChange({name:'investorName', value: investorData[0]}));
+      dispatch(handleChange({name, value: investorData[1]}));
+      dispatch(handleChange({name:'familyHead', value: investorData[2]}));
+      return;
+    }
+    dispatch(handleChange({name, value}))
+  }
+
+  
   // method to handle change in inputs 
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, dataset } = event.target;  
+    console.log(event)  
     dispatch(handleChange({name, value}));
   }
 
@@ -31,7 +78,7 @@ function Header({ handleSubmit, submitBtn }) {
       <header>
       <h1 className='text-3xl text-primary-white py-2 bg-light-blue'>MF TRANSACTIONS</h1>
       </header>
-      <form onSubmit={handleSubmit} className='flex flex-col gap-3 mt-3'>
+      <form onSubmit={handleSubmit} className='flex flex-wrap gap-6 gap-y-8 mt-3'>
         {/* <legend></legend> */}
         {/* <div className='grow shrink w-80'>
           <EmailInput
@@ -44,7 +91,7 @@ function Header({ handleSubmit, submitBtn }) {
           />
         </div> */}
 
-        <div className='grow shrink'>
+        <div className='grow shrink basis-full'>
           <RadioInput
             label='Transaction Preference'
             name='transactionPreference'
@@ -54,20 +101,20 @@ function Header({ handleSubmit, submitBtn }) {
           />
         </div>
 
-        <fieldset className='flex grow shrink gap-3 mt-3'>
-          <legend className='text-gray-800 text-sm text-left'>Investor Name</legend>
-          <div className="w-80">
+        {/* <fieldset className='flex grow shrink gap-3 mt-3'> */}
+          {/* <legend className='text-gray-800 text-sm text-left'>Investor Name</legend> */}
+          <div className="w-80 grow shrink basis-72">
             <InputList
-              id='investorFirstName'
-              label='First Name'
+              id='investorName'
+              label='Investor name'
               listName='investor-names'
               required={true}
-              value={commonData.investorFirstName}
-              onChange={handleInputChange}
+              value={commonData.investorName}
+              customHandleChange={handleNameChange}
               listOptions={investorNameOptions}
             />
           </div>
-          <div className="w-80">
+          {/* <div className="w-80">
             <TextInput
               id='investorLastName'
               label='Last Name (optional)'
@@ -76,10 +123,10 @@ function Header({ handleSubmit, submitBtn }) {
               value={commonData.investorLastName}
               onChange={handleInputChange}
             />
-          </div>
-        </fieldset>
+          </div> */}
+        {/* </fieldset> */}
 
-        <div className='grow shrink w-80 mt-2'>
+        <div className='grow shrink basis-72 w-80'>
           <InputList
             id='panNumber'
             label='PAN Number'
@@ -87,11 +134,11 @@ function Header({ handleSubmit, submitBtn }) {
             placeHolder='XXXXXXXXXX'
             required={true}
             value={commonData.panNumber}
-            onChange={handleInputChange}
-            listOptions={panOptions}
+            customHandleChange={handlePanChange}
+            listOptions={investorNameOptions}
           />
         </div>
-        <div className='grow shrink w-80'>
+        <div className='grow shrink basis-72 w-80'>
           <TextInput
             id='familyHead'
             label='Family Head'

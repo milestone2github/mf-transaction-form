@@ -97,19 +97,18 @@ app.get("/auth/zoho/callback", async (req, res) => {
 app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
-    const { name } = req.query;
-    const { pan } = req.query;
-    const { fh } = req.query;
-    console.log(name);
+    const { name, pan, fh } = req.query;
+    
     if (!name && !pan && !fh) {
       return res.status(400).send("name, pan or fh parameter is required");
     }
-    var query;
+    
+    let query;
     if (name) {
       query = { NAME: new RegExp(name, "i") };
     }
     if (pan) {
-      query = { PAN: pan };
+      query = { PAN: new RegExp(pan, "i") };
     }
     if (fh) {
       query = { "FAMILY HEAD": new RegExp(fh, "i") };

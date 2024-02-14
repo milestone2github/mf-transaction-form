@@ -4,9 +4,20 @@ const baseUrl = 'http://localhost:5000/api'
 // Async thunk for fetching AMC name options
 export const fetchInvestorData = createAsyncThunk(
   'optionLists/fetchInvestorData',
-  async () => {
+  async (query) => {
+    let params = '';
+    if('investorName' in query && query.investorName.length) {
+      params = `name=${query.investorName}`
+    }
+    else if('panNumber' in query && query.panNumber.length) {
+      params = `pan=${query.panNumber}`
+    }
+    else if('familyHead' in query && query.familyHead.length) {
+      params = `fh=${query.familyHead}`
+    }
+    else return [];
     try {
-      const response = await fetch(`${baseUrl}/investors`, {
+      const response = await fetch(`${baseUrl}/investors/?${params}`, {
         method: 'GET'
       }); 
       const data = await response.json();

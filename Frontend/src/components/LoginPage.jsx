@@ -4,10 +4,11 @@ import logo from '../assets/companyLogo.png'
 
 function LoginPage() {
   const handleLogin = async () => {
+    window.location.href = 'http://localhost:5000/auth/zoho'
     // code to redirect to zoho
-    const url = '/auth/zoho';
-    const response = await fetch(url);
-    console.log(response)
+    // const url = '/auth/zoho';
+    // const response = await fetch(url);
+    // console.log(response)
   }
 
   return (

@@ -9,10 +9,12 @@ function CustomInputDatalist({
   placeHolder,
   required,
   disable,
+  fetchData,
+  updateSelectedOption
 }) {
   const [inputValue, setInputValue] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredOptions, setFilteredOptions] = useState(listOptions)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const container = useRef(null);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
@@ -20,15 +22,6 @@ function CustomInputDatalist({
   useEffect(() => {
     setInputValue(value); // Update state when the `value` prop changes
   }, [value]);
-
-  useEffect(() => {
-    // Filter options based on input value
-    const filter = inputValue.toLowerCase();
-    const filtered = listOptions.filter(option =>
-      option.value.toLowerCase().includes(filter)
-    );
-    setFilteredOptions(filtered);
-  }, [inputValue, listOptions]);
 
   // Effect to listen click outside of the Dropdown 
   useEffect(() => {
@@ -40,24 +33,84 @@ function CustomInputDatalist({
   }, [])
 
   const handleChange = (event) => {
-    const {name, value} = event.target;
+    const { name, value } = event.target;
     setInputValue(value)
+
+    if(fetchData)
+      fetchData(name, value);
   }
 
-  const handleBlur = (event) => {
-    const {name, value} = event.target;
-  }
+  // method to handle click outside of the SelectMeu 
+  const handleClickOutside = (e) => {
+    if (!container?.current.contains(e.target)) {
+      setIsOpen(false);
+    }
+  };
+
+  // method to handle menu using keys 
+  const handleKeyDown = (event) => {
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        console.log('key: ', event.key)
+        setHighlightedIndex((prevIndex) =>
+          prevIndex < listOptions.length - 1 ? prevIndex + 1 : prevIndex
+        );
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        console.log('key: ', event.key)
+        setHighlightedIndex((prevIndex) =>
+          prevIndex > 0 ? prevIndex - 1 : 0
+        );
+        break;
+      case 'Enter': console.log('key: ', event.key)
+        event.preventDefault();
+        if(highlightedIndex >= 0 && highlightedIndex < listOptions.length){
+          updateSelectedOption(listOptions[highlightedIndex])
+          setIsOpen(false);
+          event.target.blur();
+          setHighlightedIndex(-1)
+        }
+        break;
+      case 'Escape':
+        setIsOpen(false);
+        break;
+      case 'Tab':
+        if(highlightedIndex >= 0 && highlightedIndex < listOptions.length)
+          updateSelectedOption(listOptions[highlightedIndex]);
+        else if(value.length)
+          setInputValue(value)
+        else
+          setInputValue('')
+        setIsOpen(false);
+        event.target.blur();
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
-    <div className='flex flex-col gap-1' ref={container}>
+    <div className='flex flex-col gap-1'>
       <label
         htmlFor={id}
         className='text-gray-750 text-sm text-left'
       >{label}
       </label>
 
+      <div
+        ref={container} 
+        className={`relative mt-1 focus:outline-none border-2 rounded-md ${isOpen && 'border-light-blue'}`} 
+        tabIndex={0} 
+        onKeyDown={handleKeyDown}
+        onBlur={handleClickOutside} 
+        onFocus={() => toggleDropdown}
+      >
+
       <input
-        className='bg-transparent text-black-900 rounded-md border-2 w-full border-gray-300 py-2 px-2 outline-none focus-within:border-light-blue disabled:border-gray-200'
+        className='bg-transparent text-black-900 rounded-md w-full border-gray-300 py-2 px-2 outline-none focus-within:border-none disabled:border-gray-200'
         name={id}
         id={id}
         list={listName}
@@ -66,17 +119,25 @@ function CustomInputDatalist({
         placeholder={placeHolder}
         value={inputValue}
         onChange={handleChange}
-        onBlur={handleBlur}
+        autoComplete='off'
+        onFocus={() => {if(!isOpen) setIsOpen(true)}}
       />
 
-      <ul className="custom-dropdown">
-        {filteredOptions.map((option, index) => (
-          <li key={index} onClick={() => setInputValue(option.value)}>
-            <span>{option.label}</span> <span>{option.label}</span>
+      {isOpen && !!listOptions.length && <ul className="absolute top-full w-full max-h-[328px] overflow-y-auto text-sm rounded-md mt-1 py-1 bg-primary-white list-none shadow-md z-10 border">
+        {listOptions.map((option, index) => (
+          <li 
+          key={index} 
+          className={`py-2 px-2 cursor-pointer text-left hover:bg-gray-200 focus:bg-gray-200 ${index === highlightedIndex ? 'bg-gray-200' : ''}`}
+          onClick={() => {
+            updateSelectedOption(option);
+            setIsOpen(false);
+          }}
+          >
+            <span className='font-medium'>{option.name}</span> / <span className='text-gray-900'>{option.pan}</span> / <span>{option.familyHead}</span>
           </li>
         ))}
-      </ul>
-
+      </ul>}
+      </div>
     </div>
   )
 }

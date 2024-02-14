@@ -14,19 +14,9 @@ const optionListsSlice = createSlice({
       'Ved Prakash',
       'Vilakshan Bhutani',
       'Yatin Munjal',
-    ],
-    investorNameOptions: [
-      'Charu Negi',
-      'Ishu Mavar',
-      'Manjeet Kumar',
-      'Nidhi Sharma',
-      'Pramod Bhutani',
-      'Sagar Maini',
-      'Ved Prakash',
-      'Vilakshan Bhutani',
-      'Yatin Munjal',
-    ],
-    transactionPrefOptions : [
+    ], //test
+    investorNameOptions: [],
+    transactionPrefOptions: [
       'ASAP', 'Date Given in Remarks', 'Most Urgent', 'Next Working Day'
     ],
     sysTransactionForOptions: ['Registration', 'Cancellation'],
@@ -56,11 +46,15 @@ const optionListsSlice = createSlice({
     purch_redempTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Redeem All Units', 'Units Mentioned in Remarks', 'Unlocked Units'],
     switchTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Switch All Units', 'Units Mentioned in Remarks', 'Unlocked Units']
   },
-  extraReducers: (builder) => { 
+  extraReducers: (builder) => {
     builder.addCase(fetchInvestorData.fulfilled, (state, action) => {
-      const investorOptions = action.payload.map(investor => (
-        `${investor['NAME']} / ${investor['PAN']} / ${investor['FAMILY HEAD']}`
-      ))
+      const investorOptions = action.payload.map(investor => {
+        return ({
+          name: investor['NAME'],
+          pan: investor['PAN'],
+          familyHead: investor['FAMILY HEAD']
+        })
+      })
       state.investorNameOptions = investorOptions;
     });
 
@@ -73,13 +67,12 @@ const optionListsSlice = createSlice({
       state.folioOptionsWithNew = ['Create New Folio', ...action.payload];
       state.folioOptions = action.payload;
     });
-    
+
     builder.addCase(fetchSchemeNameOptions.fulfilled, (state, action) => {
       state.schemeNameOptions = action.payload;
     });
   }
 })
 
-// export const { updateSysTransactionFor, updateFolioOptions, addSysOptionsInstance, removeSysOptionsInstance, addPurchRedempOptionsInstance, removePurchRedempOptionsInstance } = optionListsSlice.actions;
 
 export default optionListsSlice.reducer;

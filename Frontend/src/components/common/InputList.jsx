@@ -20,18 +20,21 @@ function InputList({
   const [inputValue, setInputValue] = useState(value);
 
   useEffect(() => {
+    console.log('value changed: ', value)
     setInputValue(value); // Update state when the `value` prop changes
   }, [value]);
 
   const handleChange = (event) => {
-    const newValue = event.target.value;
-    setInputValue(newValue); // Always update the inputValue state
     if(customHandleChange) {
       customHandleChange(event)
       return;
     }
-    if(listOptions.includes(newValue)) {
-      onChange(event)
+    else if(onChange) {
+      const newValue = event.target.value;
+      setInputValue(newValue); // Always update the inputValue state
+      if(listOptions.includes(newValue)){
+        onChange(event)
+      }
     }
   };
 

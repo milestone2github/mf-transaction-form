@@ -97,18 +97,19 @@ app.get("/auth/zoho/callback", async (req, res) => {
 app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
-    const { name, pan, fh } = req.query;
-    
+    const { name } = req.query;
+    const { pan } = req.query;
+    const { fh } = req.query;
+    console.log(name);
     if (!name && !pan && !fh) {
       return res.status(400).send("name, pan or fh parameter is required");
     }
-    
-    let query;
+    var query;
     if (name) {
       query = { NAME: new RegExp(name, "i") };
     }
     if (pan) {
-      query = { PAN: new RegExp(pan, "i") };
+      query = { PAN: pan };
     }
     if (fh) {
       query = { "FAMILY HEAD": new RegExp(fh, "i") };
@@ -135,31 +136,43 @@ app.get("/api/folio", async (req, res) => {
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error fetching investors", error);
-    res.status(500).send("Error while fetching investors");
+    console.error("Error fetching folio's", error);
+    res.status(500).send("Error while fetching folio's");
   }
 });
 
-app.get("/api/schemename", async (req, res) => {
-  try {
-    const collection = req.db.collection("schemeDB");
-    const query = { type: new RegExp(req.body.query.type, "i") };
-    const result = await collection.find(query).toArray();
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Error during database lookup", error);
-    res.status(500).send("Error during database lookup");
-  }
-});
 app.get("/api/amc", async (req, res) => {
   try {
-    const collection = req.db.collection("amc");
-    const query = { type: new RegExp(req.body.query.type, "i") };
-    const result = await collection.find(query).toArray();
-    res.status(200).json(result);
+    const collection = req.db.collection("amc"); // Replace YourCollectionName with the actual name of your collection
+    const { amcCode } = req.query; // This line extracts the AMC Code from the query parameters
+    if (!amcCode) {
+      return res.status(400).send("AMC Code parameter is required");
+    }
+    var query = { "AMC Code": new RegExp(amcCode, "i") }; // This line constructs the query to find documents by AMC Code
+    const result = await collection.find(query).toArray(); // This line executes the query and converts the result to an array
+    res.status(200).json(result); // This line sends the query result back to the client as JSON
   } catch (error) {
-    console.error("Error during database lookup", error);
-    res.status(500).send("Error during database lookup");
+    console.error("Error fetching AMC details", error);
+    res.status(500).send("Error while fetching AMC details");
+  }
+});
+
+app.get("/api/scheme", async (req, res) => {
+  try {
+    const collection = req.db.collection("amc"); // Replace YourCollectionName with the actual name of your collection
+    const { amcCode, scm } = req.query; // This line extracts the AMC Code from the query parameters
+    if (!amcCode) {
+      return res.status(400).send("AMC Code parameter is required");
+    }
+    if (!scm) {
+      return res.status(400).send("scm Code parameter is required");
+    }
+    var query = { "AMC Code": amcCode, "Scheme Code": new RegExp(scm, "i") }; // This line constructs the query to find documents by AMC Code
+    const result = await collection.find(query).toArray(); // This line executes the query and converts the result to an array
+    res.status(200).json(result); // This line sends the query result back to the client as JSON
+  } catch (error) {
+    console.error("Error fetching scheme details", error);
+    res.status(500).send("Error while fetching scheme details");
   }
 });
 

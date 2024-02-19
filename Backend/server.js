@@ -7,11 +7,19 @@ const { MongoClient } = require("mongodb");
 
 const app = express();
 const port = 5000;
+const session = require('express-session');
+
+// Configure session middleware
+app.use(session({
+  secret: 'secret_key', // Use a real secret in production
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using https
+}));
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
-
 // Initialize MongoDB Client
 const mongoClient = new MongoClient(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -67,6 +75,9 @@ app.get("/auth/zoho/callback", async (req, res) => {
       }
     );
 
+    // Assuming response.data contains the user information
+    // Create session here
+    req.session.user = response.data; // Store user data in session
     res.redirect("/");
   } catch (error) {
     console.error("Error during authentication", error);
@@ -74,6 +85,15 @@ app.get("/auth/zoho/callback", async (req, res) => {
   }
 });
 
+app.get('/api/user/checkLoggedIn', (req, res) => {
+  if (req.session && req.session.user) {
+    // If the session exists and contains user information, the user is logged in
+    res.status(200).json({ loggedIn: true });
+  } else {
+    // Otherwise, the user is not logged in
+    res.status(200).json({ loggedIn: false });
+  }
+});
 // Assuming you have already set up the MongoDB connection and middleware as described previously
 // endpoint to add investor data to mongodb
 // app.post("/api/investors", async (req, res) => {
@@ -154,6 +174,19 @@ app.get("/api/amc", async (req, res) => {
   } catch (error) {
     console.error("Error fetching AMC details", error);
     res.status(500).send("Error while fetching AMC details");
+  }
+});
+app.get('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction error", err);
+        return res.status(500).send("Could not log out.");
+      }
+      res.redirect('/');
+    });
+  } else {
+    res.redirect('/');
   }
 });
 

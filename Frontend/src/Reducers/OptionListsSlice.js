@@ -59,7 +59,8 @@ const optionListsSlice = createSlice({
     });
 
     builder.addCase(fetchAmcNameOptions.fulfilled, (state, action) => {
-      state.amcNameOptions = action.payload;
+      let options = action.payload.map(item => (item["AMC Code"]));
+      state.amcNameOptions = options;
     });
 
     builder.addCase(fetchFolioOptions.fulfilled, (state, action) => {

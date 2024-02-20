@@ -4,7 +4,7 @@ import RadioInput from './common/RadioInput'
 import TextInput from './common/TextInput'
 import { useDispatch, useSelector } from 'react-redux'
 import { handleChange } from '../Reducers/CommonDataSlice'
-import { fetchInvestorData } from '../Actions/OptionListsAction'
+import { fetchFolioOptions, fetchInvestorData } from '../Actions/OptionListsAction'
 import debounce from '../utils/debounce'
 import CustomInputList from './common/CustomInputList'
 
@@ -44,11 +44,25 @@ function Header({ handleSubmit, submitBtn }) {
 
   // method to handle change in inputs 
   const handleInputChange = (event) => {
-    const { name, value, dataset } = event.target;
+    const { name, value } = event.target;
     console.log(event)
     dispatch(handleChange({ name, value }));
   }
 
+  // effect to fetch folio options on change of pan number 
+  useEffect(() => {
+    if(commonData.panNumber.length) {
+      dispatch(fetchFolioOptions(commonData.panNumber))
+      .then((action) => {
+        console.log("Dispatched fetchFolioOptions:", action);
+      })
+      .catch((error) => {
+        console.error("Error while fetching folios:", error);
+      });
+    }
+  
+  }, [commonData.panNumber])
+  
   return (
     <div>
       <header>

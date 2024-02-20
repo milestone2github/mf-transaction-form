@@ -63,13 +63,6 @@ function SystematicForm({ handleSubmit }) {
     }, 280), // 300ms debounce time
     [dispatch]
   );
-
-  // // effect to fetch amc name options 
-  // useEffect(() => {
-  //   dispatch(fetchAmcNameOptions())
-  //   dispatch(fetchSchemeNameOptions())
-  //   dispatch(fetchFolioOptions())
-  // }, []);
   
   // method to handle change in inputs 
   const handleInputChange = (event) => {

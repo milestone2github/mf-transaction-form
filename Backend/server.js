@@ -78,6 +78,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
     // Assuming response.data contains the user information
     // Create session here
     req.session.user = response.data; // Store user data in session
+    // res.status(200).json({ loggedIn: true });
     res.redirect("/");
   } catch (error) {
     console.error("Error during authentication", error);
@@ -120,7 +121,7 @@ app.get("/api/investors", async (req, res) => {
     const { name } = req.query;
     const { pan } = req.query;
     const { fh } = req.query;
-    console.log(name);
+    
     if (!name && !pan && !fh) {
       return res.status(400).send("name, pan or fh parameter is required");
     }
@@ -142,7 +143,7 @@ app.get("/api/investors", async (req, res) => {
   }
 });
 
-app.get("/api/folio", async (req, res) => {
+app.get("/api/folios", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb2");
     const { pan } = req.query;
@@ -153,6 +154,7 @@ app.get("/api/folio", async (req, res) => {
     if (pan) {
       query = { pan: pan };
     }
+    
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
   } catch (error) {
@@ -164,12 +166,12 @@ app.get("/api/folio", async (req, res) => {
 app.get("/api/amc", async (req, res) => {
   try {
     const collection = req.db.collection("amc"); // Replace YourCollectionName with the actual name of your collection
-    const { amcCode } = req.query; // This line extracts the AMC Code from the query parameters
-    if (!amcCode) {
-      return res.status(400).send("AMC Code parameter is required");
+    const { keywords } = req.query; // This line extracts the AMC Code from the query parameters
+    if (!keywords) {
+      return res.status(400).send("Keywords are required to get AMC names");
     }
-    var query = { "AMC Code": new RegExp(amcCode, "i") }; // This line constructs the query to find documents by AMC Code
-    const result = await collection.find(query).toArray(); // This line executes the query and converts the result to an array
+    var query = { "AMC Code": new RegExp(keywords, "i") }; // This line constructs the query to find documents by AMC Code
+    const result = await collection.find(query, {projection: {'AMC Code' : 1, _id: 0}}).toArray(); // This line executes the query and converts the result to an array
     res.status(200).json(result); // This line sends the query result back to the client as JSON
   } catch (error) {
     console.error("Error fetching AMC details", error);
@@ -193,14 +195,14 @@ app.get('/logout', (req, res) => {
 app.get("/api/scheme", async (req, res) => {
   try {
     const collection = req.db.collection("amc"); // Replace YourCollectionName with the actual name of your collection
-    const { amcCode, scm } = req.query; // This line extracts the AMC Code from the query parameters
-    if (!amcCode) {
+    const { amc, keywords } = req.query; // This line extracts the AMC Code from the query parameters
+    if (!amc) {
       return res.status(400).send("AMC Code parameter is required");
     }
     if (!scm) {
       return res.status(400).send("scm Code parameter is required");
     }
-    var query = { "AMC Code": amcCode, "Scheme Code": new RegExp(scm, "i") }; // This line constructs the query to find documents by AMC Code
+    var query = { "AMC Code": amc, "Scheme Code": new RegExp(keywords, "i") }; // This line constructs the query to find documents by AMC Code
     const result = await collection.find(query).toArray(); // This line executes the query and converts the result to an array
     res.status(200).json(result); // This line sends the query result back to the client as JSON
   } catch (error) {

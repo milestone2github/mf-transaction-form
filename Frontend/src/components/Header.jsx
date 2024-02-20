@@ -1,24 +1,22 @@
 import React, { useCallback, useEffect } from 'react'
 import EmailInput from './common/EmailInput'
 import RadioInput from './common/RadioInput'
-import InputList from './common/InputList'
 import TextInput from './common/TextInput'
 import { useDispatch, useSelector } from 'react-redux'
 import { handleChange } from '../Reducers/CommonDataSlice'
 import { fetchInvestorData } from '../Actions/OptionListsAction'
-import CustomInputDatalist from './common/CustomInputDatalist'
 import debounce from '../utils/debounce'
+import CustomInputList from './common/CustomInputList'
 
 function Header({ handleSubmit, submitBtn }) {
-  // const [investorObject, setInvestorObject] = useState({name: '', pan: '', familyHead: ''})
   // get systematicData state from store
   const commonData = useSelector(state => state.commonData.value);
 
   // get optionLists state from store 
-  const { 
-    panOptions, 
-    investorNameOptions, 
-    transactionPrefOptions 
+  const {
+    panOptions,
+    investorNameOptions,
+    transactionPrefOptions
   } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers 
@@ -26,8 +24,8 @@ function Header({ handleSubmit, submitBtn }) {
 
   // Debounced dispatch function
   const debouncedFetchInvestorData = useCallback(
-    debounce((name, nextValue) => {
-      dispatch(fetchInvestorData({[name]: nextValue}))
+    debounce(( nextValue, name ) => {
+      dispatch(fetchInvestorData({ [name]: nextValue }))
         .then((action) => {
           console.log("Dispatched fetchInvestorData:", action);
         })
@@ -39,22 +37,22 @@ function Header({ handleSubmit, submitBtn }) {
   );
 
   const handleNameChange = (option) => {
-    dispatch(handleChange({name: 'investorName', value: option.name}))
-    dispatch(handleChange({name: 'panNumber', value: option.pan}))
-    dispatch(handleChange({name: 'familyHead', value: option.familyHead}))
+    dispatch(handleChange({ name: 'investorName', value: option.name }))
+    dispatch(handleChange({ name: 'panNumber', value: option.pan }))
+    dispatch(handleChange({ name: 'familyHead', value: option.familyHead }))
   }
-  
+
   // method to handle change in inputs 
   const handleInputChange = (event) => {
-    const { name, value, dataset } = event.target;  
-    console.log(event)  
-    dispatch(handleChange({name, value}));
+    const { name, value, dataset } = event.target;
+    console.log(event)
+    dispatch(handleChange({ name, value }));
   }
 
   return (
     <div>
       <header>
-      <h1 className='text-3xl text-primary-white py-2 bg-light-blue'>MF TRANSACTIONS</h1>
+        <h1 className='text-3xl text-primary-white py-2 bg-light-blue'>MF TRANSACTIONS</h1>
       </header>
       <form onSubmit={handleSubmit} className='flex flex-wrap gap-6 gap-y-8 mt-3'>
         {/* <legend></legend> */}
@@ -80,31 +78,38 @@ function Header({ handleSubmit, submitBtn }) {
         </div>
 
         {/* <fieldset className='flex grow shrink gap-3 mt-3'> */}
-          {/* <legend className='text-gray-800 text-sm text-left'>Investor Name</legend> */}
-          <div className="w-80 grow shrink basis-72">
-            <CustomInputDatalist
-              id='investorName'
-              label='Investor name'
-              listName='investor-names'
-              required={true}
-              value={commonData.investorName}
-              fetchData={debouncedFetchInvestorData}
-              updateSelectedOption={handleNameChange}
-              listOptions={investorNameOptions}
-            />
-          </div>
+        {/* <legend className='text-gray-800 text-sm text-left'>Investor Name</legend> */}
+        <div className="w-80 grow shrink basis-72">
+          <CustomInputList
+            id='investorName'
+            label='Investor name'
+            listName='investor-names'
+            required={true}
+            value={commonData.investorName}
+            fetchData={debouncedFetchInvestorData}
+            updateSelectedOption={handleNameChange}
+            listOptions={investorNameOptions}
+            renderOption={(option) =>
+              (<><span className='font-medium'>{option.name}</span> / <span className='text-gray-900'>{option.pan}</span> / <span>{option.familyHead}</span></>)
+            }
+          />
+        </div>
         {/* </fieldset> */}
 
         <div className='grow shrink basis-72 w-80'>
-          <CustomInputDatalist
+          <CustomInputList
             id='panNumber'
             label='PAN Number'
             listName='pan-numbers'
             placeHolder='XXXXXXXXXX'
             required={true}
             value={commonData.panNumber}
+            fetchData={debouncedFetchInvestorData}
             updateSelectedOption={handleNameChange}
             listOptions={investorNameOptions}
+            renderOption={(option) =>
+              (<><span className=''>{option.name}</span> / <span className='font-medium'>{option.pan}</span> / <span>{option.familyHead}</span></>)
+            }
           />
         </div>
         <div className='grow shrink basis-72 w-80'>
@@ -117,7 +122,7 @@ function Header({ handleSubmit, submitBtn }) {
             onChange={handleInputChange}
           />
         </div>
-        
+
         <button ref={submitBtn} type='submit' className='hidden'>Submit</button>
       </form>
     </div>

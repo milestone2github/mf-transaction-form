@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import RadioInput from './common/RadioInput'
 import InputList from './common/InputList'
 import TextInput from './common/TextInput'
@@ -12,6 +12,8 @@ import CloseButton from './common/CloseButton'
 import {useDispatch, useSelector} from 'react-redux'
 import {handleChange, handleSelect, handleAdd, handleRemove} from '../Reducers/SystematicDataSlice'
 import { fetchAmcNameOptions, fetchFolioOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction'
+import CustomInputList from './common/CustomInputList'
+import debounce from '../utils/debounce'
 
 function SystematicForm({ handleSubmit }) {
   // get systematicData state from store
@@ -34,6 +36,34 @@ function SystematicForm({ handleSubmit }) {
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
 
+  // Debounced fetch amc names function
+  const debouncedFetchAmcNames = useCallback(
+    debounce((keywords) => {
+      dispatch(fetchAmcNameOptions(keywords))
+        .then((action) => {
+          console.log("Dispatched fetch Amc names:", action);
+        })
+        .catch((error) => {
+          console.error("Error while fetching Amc names:", error);
+        });
+    }, 280), // 300ms debounce time
+    [dispatch]
+  );
+
+   // Debounced fetch scheme names function
+  const debouncedFetchSchemeNames = useCallback(
+    debounce((amc, keywords) => {
+      dispatch(fetchSchemeNameOptions(amc, keywords))
+        .then((action) => {
+          console.log("Dispatched fetch scheme names:", action);
+        })
+        .catch((error) => {
+          console.error("Error while fetching Scheme names:", error);
+        });
+    }, 280), // 300ms debounce time
+    [dispatch]
+  );
+
   // // effect to fetch amc name options 
   // useEffect(() => {
   //   dispatch(fetchAmcNameOptions())
@@ -45,6 +75,11 @@ function SystematicForm({ handleSubmit }) {
   const handleInputChange = (event) => {
     const { name, value, dataset: { index } } = event.target;
     dispatch(handleChange({ name, value, index })); // dispatch the change 
+  };
+
+  // method to handle change in select menus
+  const handleInputListChange = (value, name, index) => {
+    dispatch(handleSelect({ name, value, index })); // dispatch the change 
   };
 
   // method to handle change in select menus
@@ -101,41 +136,57 @@ function SystematicForm({ handleSubmit }) {
               />
             </div>
             <div className='grow shrink basis-72'>
-              <InputList
+              <CustomInputList
                 id='systematicMfAmcName'
                 index={idx}
                 label='MF (AMC) Name'
                 listName='amc-names'
                 required={true}
                 value={systematicItem.systematicMfAmcName}
+                fetchData={debouncedFetchAmcNames}
+                updateSelectedOption={handleInputListChange}
                 listOptions={amcNameOptions}
-                onChange={handleInputChange}
+                renderOption={(option) => (
+                  option
+                )}
               />
             </div>
             {['SIP', 'STP', 'Capital Appreciation STP'].includes(systematicItem.systematicTraxType) && 
             <div className='grow shrink basis-72'>
-              <InputList
+              <CustomInputList
                 id='systematicSchemeName'
                 index={idx}
                 label='Scheme Name (Target Scheme)'
                 listName='systematic-scheme-names'
                 required={true}
                 value={systematicItem.systematicSchemeName}
-                onChange={handleInputChange}
+                fetchData={(value) => 
+                  debouncedFetchSchemeNames(systematicItem.systematicMfAmcName, value)
+                }
+                updateSelectedOption={handleInputListChange}
                 listOptions={schemeNameOptions}
+                renderOption={(option) => (
+                  option
+                )}
               />
             </div>}
             {systematicItem.systematicTraxType !== 'SIP' &&
             <div className='grow shrink basis-72'>
-              <InputList
+              <CustomInputList
                 id='systematicSourceScheme'
                 index={idx}
                 label='Source Scheme'
                 listName='systematic-source-schemes'
                 required={true}
                 value={systematicItem.systematicSourceScheme}
-                onChange={handleInputChange}
+                fetchData={(value) => 
+                  debouncedFetchSchemeNames(systematicItem.systematicMfAmcName, value)
+                }
+                updateSelectedOption={handleInputListChange}
                 listOptions={schemeNameOptions}
+                renderOption={(option) => (
+                  option
+                )}
               />
             </div>}
             <div className='grow shrink basis-72'>

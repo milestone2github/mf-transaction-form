@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-function CustomInputDatalist({
+function CustomInputList({
   id,
+  index,
   value,
   listName,
   listOptions,
@@ -9,6 +10,7 @@ function CustomInputDatalist({
   placeHolder,
   required,
   disable,
+  renderOption,
   fetchData,
   updateSelectedOption
 }) {
@@ -37,7 +39,7 @@ function CustomInputDatalist({
     setInputValue(value)
 
     if(fetchData)
-      fetchData(name, value);
+      fetchData(value, name);
   }
 
   // method to handle click outside of the SelectMeu 
@@ -67,7 +69,7 @@ function CustomInputDatalist({
       case 'Enter': console.log('key: ', event.key)
         event.preventDefault();
         if(highlightedIndex >= 0 && highlightedIndex < listOptions.length){
-          updateSelectedOption(listOptions[highlightedIndex])
+          updateSelectedOption(listOptions[highlightedIndex], id, index)
           setIsOpen(false);
           event.target.blur();
           setHighlightedIndex(-1)
@@ -78,7 +80,7 @@ function CustomInputDatalist({
         break;
       case 'Tab':
         if(highlightedIndex >= 0 && highlightedIndex < listOptions.length)
-          updateSelectedOption(listOptions[highlightedIndex]);
+          updateSelectedOption(listOptions[highlightedIndex], id, index);
         else if(value.length)
           setInputValue(value)
         else
@@ -123,17 +125,17 @@ function CustomInputDatalist({
         onFocus={() => {if(!isOpen) setIsOpen(true)}}
       />
 
-      {isOpen && !!listOptions.length && <ul className="absolute top-full w-full max-h-[328px] overflow-y-auto text-sm rounded-md mt-1 py-1 bg-primary-white list-none shadow-md z-10 border">
-        {listOptions.map((option, index) => (
+      {isOpen && !!listOptions.length && <ul className="absolute top-full w-full max-h-[328px] overflow-y-auto snap-y scroll-p-1 text-sm rounded-md mt-1 py-1 bg-primary-white list-none shadow-md z-10 border">
+        {listOptions.map((option, idx) => (
           <li 
-          key={index} 
-          className={`py-2 px-2 cursor-pointer text-left hover:bg-gray-200 focus:bg-gray-200 ${index === highlightedIndex ? 'bg-gray-200' : ''}`}
+          key={idx} 
+          className={`py-2 px-2 cursor-pointer snap-start text-left hover:bg-gray-200 focus:bg-gray-200 ${idx === highlightedIndex ? 'bg-gray-200' : ''}`}
           onClick={() => {
-            updateSelectedOption(option);
+            updateSelectedOption(option, id, index);
             setIsOpen(false);
           }}
-          >
-            <span className='font-medium'>{option.name}</span> / <span className='text-gray-900'>{option.pan}</span> / <span>{option.familyHead}</span>
+          >{renderOption(option)}
+            {/* <span className='font-medium'>{option.name}</span> / <span className='text-gray-900'>{option.pan}</span> / <span>{option.familyHead}</span> */}
           </li>
         ))}
       </ul>}
@@ -142,4 +144,4 @@ function CustomInputDatalist({
   )
 }
 
-export default CustomInputDatalist
+export default CustomInputList

@@ -6,6 +6,7 @@ export const fetchInvestorData = createAsyncThunk(
   'optionLists/fetchInvestorData',
   async (query) => {
     let params = '';
+    
     if('investorName' in query && query.investorName.length) {
       params = `name=${query.investorName}`
     }
@@ -16,6 +17,7 @@ export const fetchInvestorData = createAsyncThunk(
       params = `fh=${query.familyHead}`
     }
     else return [];
+    
     try {
       const response = await fetch(`${baseUrl}/investors/?${params}`, {
         method: 'GET'
@@ -35,9 +37,12 @@ export const fetchInvestorData = createAsyncThunk(
 // Async thunk for fetching AMC name options
 export const fetchAmcNameOptions = createAsyncThunk(
   'optionLists/fetchAmcNameOptions',
-  async () => {
+  async (keywords) => {
+    if(!keywords.length)
+      return [];
+
     try {
-      const response = await fetch(`${baseUrl}/amc-names`, {
+      const response = await fetch(`${baseUrl}/amc/?keywords=${keywords}`, {
         method: 'GET'
       }); 
       const data = await response.json();
@@ -73,9 +78,12 @@ export const fetchFolioOptions = createAsyncThunk(
 // Async thunk for fetching Folio Options
 export const fetchSchemeNameOptions = createAsyncThunk(
   'optionLists/fetchSchemeNameOptions',
-  async () => {
+  async (amc, keywords) => {
+    if(!keywords.length)
+      return [];
+
     try {
-      const response = await fetch(`${baseUrl}/scheme-names`, {
+      const response = await fetch(`${baseUrl}/schemename?amc=${amc}&keywords=${keywords}`, {
         method: 'GET'
       }); 
       const data = await response.json();

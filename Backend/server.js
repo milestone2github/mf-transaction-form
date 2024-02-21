@@ -178,19 +178,21 @@ app.get("/api/amc", async (req, res) => {
     res.status(500).send("Error while fetching AMC details");
   }
 });
-app.get('/logout', (req, res) => {
+app.post('/api/logout', (req, res) => {
   if (req.session) {
-    req.session.destroy((err) => {
+    req.session.destroy(err => {
       if (err) {
         console.error("Session destruction error", err);
-        return res.status(500).send("Could not log out.");
+        return res.status(500).json({ message: "Could not log out." });
       }
-      res.redirect('/');
+      res.clearCookie('user');
+      res.status(204).send(); // No content to send back
     });
   } else {
-    res.redirect('/');
+    res.status(401).json({ message: 'Session not found' }); // Not authenticated or session expired
   }
 });
+
 
 app.get("/api/scheme", async (req, res) => {
   try {

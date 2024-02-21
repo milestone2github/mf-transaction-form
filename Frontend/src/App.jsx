@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import PrimaryButton from './components/common/PrimaryButton';
 import Tabs from './components/common/Tabs';
@@ -8,7 +8,6 @@ import PurchRedempForm from './components/PurchRedempForm';
 import SwitchForm from './components/SwitchForm';
 import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
-import { hollowPurchRedempObj, hollowSwitchObj, hollowSystematicObj } from './utils/initialDataObject';
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 const baseUrl = 'http://localhost:5000'
@@ -30,6 +29,9 @@ function App() {
   const switchData = useSelector(state => state.switchData.value);
 
   const commonFormSubmitBtn = useRef(null);
+  // const dispatch = useDispatch();
+  // const navigate = useNavigate();
+  // const isLoggedIn = useSelector(state => state.user.isLoggedIn)
 
   const currentForm = useQuery().get('tab') || 'systematic';
 
@@ -159,7 +161,7 @@ function App() {
     }
 
     // api call to submit form data 
-    const formData = {commonData, ...completeTransactionData}
+    const formData = { commonData, ...completeTransactionData }
     console.log(formData)
     const requestOptions = {
       method: 'POST',
@@ -170,7 +172,7 @@ function App() {
       const response = await fetch(`${baseUrl}/api/data`, requestOptions);
       const data = await response.json();
 
-      if(!response.ok) {
+      if (!response.ok) {
         alert.message = <span>Server error! Try again later</span>;
         updateAlert(alert)
         return;
@@ -187,7 +189,7 @@ function App() {
       console.log(error);
       alert.message = <span>Server error! Try again later</span>;
       updateAlert(alert)
-    } 
+    }
   }
 
   // method to trigger submit button of common data form 

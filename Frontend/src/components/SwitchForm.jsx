@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import RadioInput from './common/RadioInput';
 import InputList from './common/InputList';
 import PreFilledSelect from './common/PreFilledSelect';
@@ -9,6 +9,9 @@ import AddButton from './common/AddButton';
 import CloseButton from './common/CloseButton';
 import { useDispatch, useSelector } from 'react-redux';
 import { handleAdd, handleChange, handleRemove, handleSelect } from '../Reducers/SwitchDataSlice';
+import CustomInputList from './common/CustomInputList';
+import { fetchAmcNameOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction';
+import debounce from '../utils/debounce';
 
 function SwitchForm({ handleSubmit }) {
   // get switchData state from store 
@@ -25,6 +28,39 @@ function SwitchForm({ handleSubmit }) {
 
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
+
+   // Debounced fetch amc names function
+   const debouncedFetchAmcNames = useCallback(
+    debounce((keywords) => {
+      dispatch(fetchAmcNameOptions(keywords))
+        .then((action) => {
+          console.log("Dispatched fetch Amc names:", action);
+        })
+        .catch((error) => {
+          console.error("Error while fetching Amc names:", error);
+        });
+    }, 280), // 300ms debounce time
+    [dispatch]
+  );
+
+   // Debounced fetch scheme names function
+  const debouncedFetchSchemeNames = useCallback(
+    debounce((amc, keywords) => {
+      dispatch(fetchSchemeNameOptions(amc, keywords))
+        .then((action) => {
+          console.log("Dispatched fetch scheme names:", action);
+        })
+        .catch((error) => {
+          console.error("Error while fetching Scheme names:", error);
+        });
+    }, 280), // 300ms debounce time
+    [dispatch]
+  );
+
+  // method to handle change in select menus
+  const handleInputListChange = (value, name, index) => {
+    dispatch(handleSelect({ name, value, index })); // dispatch the change 
+  };
 
   // method to handle change in inputs 
   const handleInputChange = (event) => {
@@ -63,39 +99,55 @@ function SwitchForm({ handleSubmit }) {
           </div>}
 
           <div className='grow shrink basis-72'>
-            <InputList
+            <CustomInputList
               id='switchMfAmcName'
               index={idx} 
               label='MF (AMC) Name'
               required={true}
               listName='amc-names'
-              listOptions={amcNameOptions}
               value={switchItem.switchMfAmcName}
-              onChange={handleInputChange}
+              fetchData={debouncedFetchAmcNames}
+                updateSelectedOption={handleInputListChange}
+                listOptions={amcNameOptions}
+                renderOption={(option) => (
+                  option
+                )}
             />
           </div>
           <div className='grow shrink basis-72'>
-            <InputList
+            <CustomInputList
               id='switchFromScheme'
               index={idx} 
               label='From Scheme'
               listName='switch-from-schemes'
               required={true}
               value={switchItem.switchFromScheme}
-              onChange={handleInputChange}
+              fetchData={(value) => 
+                debouncedFetchSchemeNames(systematicItem.systematicMfAmcName, value)
+              }
+              updateSelectedOption={handleInputListChange}
               listOptions={schemeNameOptions}
+              renderOption={(option) => (
+                option
+              )}
             />
           </div>
           <div className='grow shrink basis-72'>
-            <InputList
+            <CustomInputList
               id='switchToScheme'
               index={idx} 
               label='To Scheme'
               listName='switch-to-schemes'
               required={true}
               value={switchItem.switchToScheme}
-              onChange={handleInputChange}
+              fetchData={(value) => 
+                debouncedFetchSchemeNames(systematicItem.systematicMfAmcName, value)
+              }
+              updateSelectedOption={handleInputListChange}
               listOptions={schemeNameOptions}
+              renderOption={(option) => (
+                option
+              )}
             />
           </div>
           <div className='grow shrink basis-72'>

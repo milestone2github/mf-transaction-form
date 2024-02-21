@@ -7,6 +7,9 @@ import { handleChange } from '../Reducers/CommonDataSlice'
 import { fetchFolioOptions, fetchInvestorData } from '../Actions/OptionListsAction'
 import debounce from '../utils/debounce'
 import CustomInputList from './common/CustomInputList'
+import logo from '../assets/companyLogo.png';
+import { setLoggedIn } from '../Reducers/UserSlice'
+import { useNavigate } from 'react-router-dom'
 
 function Header({ handleSubmit, submitBtn }) {
   // get systematicData state from store
@@ -21,10 +24,11 @@ function Header({ handleSubmit, submitBtn }) {
 
   // use useDispatch hook to use reducers 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Debounced dispatch function
   const debouncedFetchInvestorData = useCallback(
-    debounce(( nextValue, name ) => {
+    debounce((nextValue, name) => {
       dispatch(fetchInvestorData({ [name]: nextValue }))
         .then((action) => {
           console.log("Dispatched fetchInvestorData:", action);
@@ -49,26 +53,53 @@ function Header({ handleSubmit, submitBtn }) {
     dispatch(handleChange({ name, value }));
   }
 
+  // Method to handle logout
+const handleLogout = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/logout`, {
+      method: 'POST',
+      credentials: 'include', 
+    });
+    if (response.ok) {
+      dispatch(setLoggedIn(false));
+      navigate('/login', { replace: true });
+    } else {
+      console.error("Logout failed: Server responded with status", response.status);
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+}
+
+
   // effect to fetch folio options on change of pan number 
   useEffect(() => {
-    if(commonData.panNumber.length) {
+    if (commonData.panNumber.length) {
       dispatch(fetchFolioOptions(commonData.panNumber))
-      .then((action) => {
-        console.log("Dispatched fetchFolioOptions:", action);
-      })
-      .catch((error) => {
-        console.error("Error while fetching folios:", error);
-      });
+        .then((action) => {
+          console.log("Dispatched fetchFolioOptions:", action);
+        })
+        .catch((error) => {
+          console.error("Error while fetching folios:", error);
+        });
     }
-  
+
   }, [commonData.panNumber])
-  
+
   return (
     <div>
-      <header>
-        <h1 className='text-3xl text-primary-white py-2 bg-light-blue'>MF TRANSACTIONS</h1>
+      <header className='flex gap-8 justify-between'>
+        <img src={logo} alt="" width={'180px'} className='h-min' />
+        <h1 className='text-3xl w-full text-primary-white py-1 bg-light-blue'>MF TRANSACTIONS</h1>
+        <button
+          type='button'
+          // style={{ width: width }}
+          className='bg-[#bf5d28] text-lg text-primary-white min-w-[120px] text-center rounded-md px-5 py-2 enabled:hover:bg-[#9b4b20] disabled:opacity-70'
+          onClick={handleLogout}
+        >Logout
+        </button>
       </header>
-      <form onSubmit={handleSubmit} className='flex flex-wrap gap-6 gap-y-8 mt-3'>
+      <form onSubmit={handleSubmit} className='flex flex-wrap gap-6 gap-y-8 mt-5'>
         {/* <legend></legend> */}
         {/* <div className='grow shrink w-80'>
           <EmailInput

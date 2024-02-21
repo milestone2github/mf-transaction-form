@@ -7,24 +7,26 @@ const { MongoClient } = require("mongodb");
 
 const app = express();
 const port = 5000;
-const session = require('express-session');
+const session = require("express-session");
+// Require the PDFKit library
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 
 // Configure session middleware
-app.use(session({
-  secret: 'secret_key', // Use a real secret in production
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Set to true if using https
-}));
+app.use(
+  session({
+    secret: "secret_key", // Use a real secret in production
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Set to true if using https
+  })
+);
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 // Initialize MongoDB Client
-const mongoClient = new MongoClient(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const mongoClient = new MongoClient(process.env.MONGO_URI);
 
 let db;
 let db2;
@@ -86,7 +88,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
   }
 });
 
-app.get('/api/user/checkLoggedIn', (req, res) => {
+app.get("/api/user/checkLoggedIn", (req, res) => {
   if (req.session && req.session.user) {
     // If the session exists and contains user information, the user is logged in
     res.status(200).json({ loggedIn: true });
@@ -121,7 +123,7 @@ app.get("/api/investors", async (req, res) => {
     const { name } = req.query;
     const { pan } = req.query;
     const { fh } = req.query;
-    
+
     if (!name && !pan && !fh) {
       return res.status(400).send("name, pan or fh parameter is required");
     }
@@ -154,7 +156,7 @@ app.get("/api/folios", async (req, res) => {
     if (pan) {
       query = { pan: pan };
     }
-    
+
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
   } catch (error) {
@@ -171,7 +173,9 @@ app.get("/api/amc", async (req, res) => {
       return res.status(400).send("Keywords are required to get AMC names");
     }
     var query = { "AMC Code": new RegExp(keywords, "i") }; // This line constructs the query to find documents by AMC Code
-    const result = await collection.find(query, {projection: {'AMC Code' : 1, _id: 0}}).toArray(); // This line executes the query and converts the result to an array
+    const result = await collection
+      .find(query, { projection: { "AMC Code": 1, _id: 0 } })
+      .toArray(); // This line executes the query and converts the result to an array
     res.status(200).json(result); // This line sends the query result back to the client as JSON
   } catch (error) {
     console.error("Error fetching AMC details", error);
@@ -217,9 +221,64 @@ app.get("/api/scheme", async (req, res) => {
 
 app.post("/api/data", async (req, res) => {
   try {
-    const database = req.db2; // Use the db instance from the middleware
+    const database = req.db2;
     let formData = req.body.formData;
     let results = [];
+    const doc = new PDFDocument();
+    let isFirstAddition = true;
+    let currentYPosition = 50; // Initialize a variable to track the current Y position
+
+    doc.pipe(fs.createWriteStream("output.pdf"));
+
+    const addDataToPDF = (data, title) => {
+      const leftMargin = 50;
+      const tableTop = currentYPosition + 20;
+      const columnWidth = 200;
+      const rowHeight = 20;
+    
+      // Draw the title for the section
+      if (!isFirstAddition) {
+        doc.addPage();
+        currentYPosition = 50; // Reset Y position for new page
+      } else {
+        isFirstAddition = false;
+      }
+      doc.fontSize(14).fillColor('navy').font('Helvetica-Bold').text(title, leftMargin, currentYPosition, { underline: true });
+      currentYPosition += 30; // Adjust for spacing after the title
+    
+      // Headers
+      doc.fontSize(12).fillColor('black').font('Helvetica').text('Input Question', leftMargin, currentYPosition);
+      doc.text('Value', leftMargin + columnWidth, currentYPosition);
+      currentYPosition += rowHeight;
+    
+      // Draw table rows for each key-value pair
+      Object.keys(data).forEach(key => {
+        let value = data[key];
+        if (typeof value === 'object' && value !== null) {
+          value = JSON.stringify(value, null, 2);
+        }
+    
+        // Ensure the table doesn't exceed the page height
+        if (currentYPosition + rowHeight > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+          currentYPosition = 50; // Reset Y position for new page
+        }
+    
+        // Key column
+        doc.fontSize(10).fillColor('darkblue').text(key, leftMargin, currentYPosition, { width: columnWidth, align: 'left' });
+    
+        // Value column
+        doc.fillColor('black').text(value, leftMargin + columnWidth, currentYPosition, { width: columnWidth, align: 'left' });
+    
+        // Move to the next row
+        currentYPosition += rowHeight;
+      });
+    
+      // Add some space after the table before the next section
+      currentYPosition += 20;
+    };
+    
+
     if (formData.systematicData) {
       const collection = database.collection("systamatic");
       for (let i = 0; i < formData.systematicData.length; i++) {
@@ -228,6 +287,7 @@ app.post("/api/data", async (req, res) => {
           formData.commonData,
           formData.systematicData[i]
         );
+        addDataToPDF(combinedSystamatic, "Systematic Data " + [i + 1]);
         const ressys = await collection.insertOne(combinedSystamatic);
         if (ressys.acknowledged) {
           // console.log(
@@ -249,6 +309,7 @@ app.post("/api/data", async (req, res) => {
           formData.commonData,
           formData.purchRedempData[i]
         );
+        addDataToPDF(combinedRedemption, "Predemption Data " + [i + 1]);
         const resp = await collection.insertOne(combinedRedemption);
         if (resp.acknowledged) {
           // console.log(
@@ -270,6 +331,7 @@ app.post("/api/data", async (req, res) => {
           formData.commonData,
           formData.switchData[0]
         );
+        addDataToPDF(combinedSwitch, "Switch Data " + [i + 1]);
         const resswit = await collection.insertOne(combinedSwitch);
         if (resswit.acknowledged) {
           // console.log("Data stored successfully in Switch:", combinedSwitch);
@@ -280,7 +342,7 @@ app.post("/api/data", async (req, res) => {
         }
       }
     }
-
+    doc.end();
     if (results.length > 0) {
       res.status(200).json(results);
     } else {

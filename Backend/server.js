@@ -132,7 +132,7 @@ app.get("/api/investors", async (req, res) => {
       query = { NAME: new RegExp(name, "i") };
     }
     if (pan) {
-      query = { PAN: pan };
+      query = { PAN: new RegExp(pan, 'i') };
     }
     if (fh) {
       query = { "FAMILY HEAD": new RegExp(fh, "i") };

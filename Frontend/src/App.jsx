@@ -10,6 +10,7 @@ import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
+import Modal from './components/common/Modal';
 const baseUrl = 'http://localhost:5000'
 
 function App() {
@@ -21,6 +22,8 @@ function App() {
   })
 
   const [completeTransactionData, setCompleteTransactionData] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   // get all data states from store 
   const commonData = useSelector(state => state.commonData.value);
@@ -29,9 +32,6 @@ function App() {
   const switchData = useSelector(state => state.switchData.value);
 
   const commonFormSubmitBtn = useRef(null);
-  // const dispatch = useDispatch();
-  // const navigate = useNavigate();
-  // const isLoggedIn = useSelector(state => state.user.isLoggedIn)
 
   const currentForm = useQuery().get('tab') || 'systematic';
 
@@ -65,7 +65,7 @@ function App() {
         return;
       }
       else if (!sysItem.sip_stp_swpDate) {
-        alert.message = <span>Select one of the option in <strong className='text-xs'>SIP / SWP / STP Date</strong></span>
+        alert.message = <span>Select one of the option in <strong className='text-xs'>{sysItem.systematicTraxType.slice(-3)} Date</strong></span>
         updateAlert(alert);
         return;
       }
@@ -136,10 +136,12 @@ function App() {
     updateAlert(alert)
   }
 
+  // method to submit form 
+  let action = '';
   const submitForm = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    
     setCompleteTransactionData(
       prevData => ({ ...prevData, commonData })
     )
@@ -162,29 +164,39 @@ function App() {
 
     // api call to submit form data 
     const formData = { commonData, ...completeTransactionData }
-    console.log(formData)
+    
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ formData })
     };
     try {
-      const response = await fetch(`${baseUrl}/api/data`, requestOptions);
-      const data = await response.json();
-
+      const response = await fetch(`${baseUrl}/api/data?method=${action}`, requestOptions);
       if (!response.ok) {
         alert.message = <span>Server error! Try again later</span>;
         updateAlert(alert)
         return;
       }
 
-      console.log('submitted')
-      updateAlert({
-        isOn: true,
-        type: 'success',
-        header: 'Form submitted',
-        message: ''
-      })
+      // if clicked preview, show the pdf 
+      if(action === 'Preview') {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+        setIsModalOpen(true);
+      }
+      
+      // if clicked submit show the status 
+      else {
+        const data = await response.json();
+        console.log('submitted')
+        updateAlert({
+          isOn: true,
+          type: 'success',
+          header: 'Form submitted',
+          message: ''
+        })
+      }
     } catch (error) {
       console.log(error);
       alert.message = <span>Server error! Try again later</span>;
@@ -194,6 +206,7 @@ function App() {
 
   // method to trigger submit button of common data form 
   const triggerSubmitBtn = (e) => {
+    action = e.target.innerText;
     e.preventDefault();
     // e.stopPropagation();
     commonFormSubmitBtn.current.click();
@@ -219,8 +232,18 @@ function App() {
                 handleSubmit={saveSwitchform}
               />
         }
+        <div className="flex gap-4">
         <PrimaryButton action={triggerSubmitBtn} text={'Submit'} width={'320px'} />
+        <button 
+          className='border px-8 border-black-900 rounded-md text-black-900 hover:bg-black-900 hover:text-primary-white'
+          onClick={triggerSubmitBtn}
+          >Preview
+        </button>
+        </div>
       </div>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <iframe src={pdfUrl} style={{ width: '768px', height: 'calc(100vh - 32px)' }} title="PDF" />
+      </Modal>
     </div>
   )
 }

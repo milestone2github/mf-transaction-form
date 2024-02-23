@@ -76,8 +76,8 @@ function InputList({
       />
 
       <datalist id={listName} > {
-        listOptions.map(option => (
-          <option key={option} value={option}/>
+        listOptions.map((option, index) => (
+          <option key={index} value={option}/>
         ))
       }
       </datalist>

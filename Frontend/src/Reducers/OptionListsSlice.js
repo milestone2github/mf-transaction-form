@@ -64,9 +64,9 @@ const optionListsSlice = createSlice({
     });
 
     builder.addCase(fetchFolioOptions.fulfilled, (state, action) => {
-      state.folioOptions = action.payload;
-      state.folioOptionsWithNew = ['Create New Folio', ...action.payload];
-      state.folioOptions = action.payload;
+      let folioOptions = action.payload.map(folio => (folio.folio.folioNumber));
+      state.folioOptionsWithNew = ['Create New Folio', ...folioOptions];
+      state.folioOptions = folioOptions;
     });
 
     builder.addCase(fetchSchemeNameOptions.fulfilled, (state, action) => {

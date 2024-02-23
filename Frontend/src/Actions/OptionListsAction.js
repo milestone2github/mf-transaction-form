@@ -60,7 +60,6 @@ export const fetchAmcNameOptions = createAsyncThunk(
 export const fetchFolioOptions = createAsyncThunk(
   'optionLists/fetchFolioOptions',
   async (pan) => {
-    console.log('fetching folio...')
     try {
       const response = await fetch(`${baseUrl}/folios?pan=${pan}`, {
         method: 'GET'

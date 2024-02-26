@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --white: rgb(253 254 254);
+      --light-gray: rgb(209 213 219);
+      --gray-750: rgb(62 74 93);
+      --light-blue: rgb(7 167 207);
+      --black: rgb(6 11 19);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      padding: 1.4rem 1.5rem;
+      font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    }
+
+    h3 {
+      text-align: center;
+      font-size: 1.2rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 0.8rem;
+      width: max-content;
+      max-width: 360px;
+    }
+
+    label {
+      color: var(--gray-750);
+    }
+
+    span {
+      border: 2px solid var(--light-gray);
+      border-radius: 6px;
+      padding: 0.5rem;
+      color: var(--black);
+      /* width: max-content; */
+    }
+
+    .row {
+      display: flex;
+      gap: 0.8rem 2rem;
+      /* margin-top: 0.8rem; */
+      /* padding: 0.9rem 0 0.9rem 0; */
+    }
+    
+    .wrap {
+      flex-wrap: wrap;
+    }
+
+    .item {
+      flex: 1 1 250px;
+    }
+
+    .radio {
+      border-color: var(--light-blue);
+      background: rgb(7, 167, 207, .1);
+      width: max-content;
+    }
+
+    .border {
+      border: 1px solid rgb(191, 210, 209);
+      padding: 1.2rem;
+      margin-top: 2rem;
+    }
+  </style>
+  <title>PDF</title>
+</head>
+
+<body>
+  <h3>{{pageTitle}}</h3>
+  <div class="field">
+    <label for="">Transaction Preference</label>
+    <span class="radio">{{transactionPreference}}</span>
+  </div>
+
+  <div class="row wrap">
+    <div class="field item">
+      <label for="">Investor Name</label>
+      <span>{{investorName}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">PAN Number</label>
+      <span>{{panNumber}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">Family Head</label>
+      <span>{{familyHead}}</span>
+    </div>
+  </div>
+
+  <div class="border">
+  <div class="row wrap ">
+    <div class="field item">
+      <label for="">Transaction Type</label>
+      <span>{{systematicTraxType}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">Transaction For</label>
+      <span class="radio">{{systematicTraxFor}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">MF (AMC) Name</label>
+      <span>{{systematicMfAmcName}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">Scheme Name (Target Scheme)</label>
+      <span>{{systematicSchemeName}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">Scheme Option</label>
+      <span class="radio">{{systematicSchemeOption}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">Folio</label>
+      <span>{{systematicFolio}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">SIP Amount</label>
+      <span>{{sip_swp_stpAmount}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">Tenure of SIP</label>
+      <span>{{tenureOfSip_swp_stp}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">SIP Date</label>
+      <span>{{sip_stp_swpDate}}</span>
+    </div>
+
+    <div class="field item">
+      <label for="">First Transaction Amount</label>
+      <span>{{firstTransactionAmount}}</span>
+    </div>
+  </div></div>
+
+</body>
+
+</html>

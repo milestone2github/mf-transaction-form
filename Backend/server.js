@@ -9,9 +9,8 @@ const app = express();
 const port = 5000;
 const session = require("express-session");
 // Require the PDFKit library
-const PDFDocument = require("pdfkit");
-const fs = require("fs");
-
+const fs = require("fs").promises;
+const puppeteer = require("puppeteer");
 // Configure session middleware
 app.use(
   session({
@@ -132,7 +131,7 @@ app.get("/api/investors", async (req, res) => {
       query = { NAME: new RegExp(name, "i") };
     }
     if (pan) {
-      query = { PAN: new RegExp(pan, 'i') };
+      query = { PAN: new RegExp(pan, "i") };
     }
     if (fh) {
       query = { "FAMILY HEAD": new RegExp(fh, "i") };
@@ -182,21 +181,20 @@ app.get("/api/amc", async (req, res) => {
     res.status(500).send("Error while fetching AMC details");
   }
 });
-app.post('/api/logout', (req, res) => {
+app.post("/api/logout", (req, res) => {
   if (req.session) {
-    req.session.destroy(err => {
+    req.session.destroy((err) => {
       if (err) {
         console.error("Session destruction error", err);
         return res.status(500).json({ message: "Could not log out." });
       }
-      res.clearCookie('user');
+      res.clearCookie("user");
       res.status(204).send(); // No content to send back
     });
   } else {
-    res.status(401).json({ message: 'Session not found' }); // Not authenticated or session expired
+    res.status(401).json({ message: "Session not found" }); // Not authenticated or session expired
   }
 });
-
 
 app.get("/api/scheme", async (req, res) => {
   try {
@@ -218,66 +216,24 @@ app.get("/api/scheme", async (req, res) => {
 });
 
 // The Zoho authentication routes remain unchanged as they do not interact with MongoDB
+function itemToHTML(item) {
+  let html = `<h2>${item.title}</h2><div>`;
+  Object.entries(item.content).forEach(([key, value]) => {
+    // Format the key to be more readable, if necessary
+    const formattedKey = key.replace(/([A-Z])/g, " $1").trim(); // Add space before capital letters
+    html += `<p><strong>${formattedKey}:</strong> ${value}</p>`;
+  });
+  html += `</div><div class="page-break"></div>`;
+  return html;
+}
 
 app.post("/api/data", async (req, res) => {
   try {
+    let pdfcontent = [];
+    req.query.method = "Submit";
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-    const doc = new PDFDocument();
-    let isFirstAddition = true;
-    let currentYPosition = 50; // Initialize a variable to track the current Y position
-
-    doc.pipe(fs.createWriteStream("output.pdf"));
-
-    const addDataToPDF = (data, title) => {
-      const leftMargin = 50;
-      const tableTop = currentYPosition + 20;
-      const columnWidth = 200;
-      const rowHeight = 20;
-    
-      // Draw the title for the section
-      if (!isFirstAddition) {
-        doc.addPage();
-        currentYPosition = 50; // Reset Y position for new page
-      } else {
-        isFirstAddition = false;
-      }
-      doc.fontSize(14).fillColor('navy').font('Helvetica-Bold').text(title, leftMargin, currentYPosition, { underline: true });
-      currentYPosition += 30; // Adjust for spacing after the title
-    
-      // Headers
-      doc.fontSize(12).fillColor('black').font('Helvetica').text('Input Question', leftMargin, currentYPosition);
-      doc.text('Value', leftMargin + columnWidth, currentYPosition);
-      currentYPosition += rowHeight;
-    
-      // Draw table rows for each key-value pair
-      Object.keys(data).forEach(key => {
-        let value = data[key];
-        if (typeof value === 'object' && value !== null) {
-          value = JSON.stringify(value, null, 2);
-        }
-    
-        // Ensure the table doesn't exceed the page height
-        if (currentYPosition + rowHeight > doc.page.height - doc.page.margins.bottom) {
-          doc.addPage();
-          currentYPosition = 50; // Reset Y position for new page
-        }
-    
-        // Key column
-        doc.fontSize(10).fillColor('darkblue').text(key, leftMargin, currentYPosition, { width: columnWidth, align: 'left' });
-    
-        // Value column
-        doc.fillColor('black').text(value, leftMargin + columnWidth, currentYPosition, { width: columnWidth, align: 'left' });
-    
-        // Move to the next row
-        currentYPosition += rowHeight;
-      });
-    
-      // Add some space after the table before the next section
-      currentYPosition += 20;
-    };
-    
 
     if (formData.systematicData) {
       const collection = database.collection("systamatic");
@@ -287,17 +243,22 @@ app.post("/api/data", async (req, res) => {
           formData.commonData,
           formData.systematicData[i]
         );
-        addDataToPDF(combinedSystamatic, "Systematic Data " + [i + 1]);
-        const ressys = await collection.insertOne(combinedSystamatic);
-        if (ressys.acknowledged) {
-          // console.log(
-          //   "Data stored successfully in systamatic:",
-          //   combinedSystamatic
-          // );
-          results.push({
-            message: "Data stored successfully in systamatic",
-            formsub: i,
-          });
+        pdfcontent.push({
+          title: "Systematic Data " + [i + 1],
+          content: combinedSystamatic,
+        });
+        if (req.query.method == "Submit") {
+          const ressys = await collection.insertOne(combinedSystamatic);
+          if (ressys.acknowledged) {
+            // console.log(
+            //   "Data stored successfully in systamatic:",
+            //   combinedSystamatic
+            // );
+            results.push({
+              message: "Data stored successfully in systamatic",
+              formsub: i,
+            });
+          }
         }
       }
     }
@@ -309,17 +270,22 @@ app.post("/api/data", async (req, res) => {
           formData.commonData,
           formData.purchRedempData[i]
         );
-        addDataToPDF(combinedRedemption, "Predemption Data " + [i + 1]);
-        const resp = await collection.insertOne(combinedRedemption);
-        if (resp.acknowledged) {
-          // console.log(
-          //   "Data stored successfully in predemption:",
-          //   combinedRedemption
-          // );
-          results.push({
-            message: "Data stored successfully in predemption",
-            formsub: i,
-          });
+        pdfcontent.push({
+          title: "Predemption Data " + [i + 1],
+          content: combinedRedemption,
+        });
+        if (req.query.method == "Submit") {
+          const resp = await collection.insertOne(combinedRedemption);
+          if (resp.acknowledged) {
+            // console.log(
+            //   "Data stored successfully in predemption:",
+            //   combinedRedemption
+            // );
+            results.push({
+              message: "Data stored successfully in predemption",
+              formsub: i,
+            });
+          }
         }
       }
     }
@@ -331,18 +297,55 @@ app.post("/api/data", async (req, res) => {
           formData.commonData,
           formData.switchData[0]
         );
-        addDataToPDF(combinedSwitch, "Switch Data " + [i + 1]);
-        const resswit = await collection.insertOne(combinedSwitch);
-        if (resswit.acknowledged) {
-          // console.log("Data stored successfully in Switch:", combinedSwitch);
-          results.push({
-            message: "Data stored successfully in Switch",
-            formsub: i,
-          });
+        pdfcontent.push({
+          title: "Switch Data " + [i + 1],
+          content: combinedSwitch,
+        });
+        if (req.query.method == "Submit") {
+          const resswit = await collection.insertOne(combinedSwitch);
+          if (resswit.acknowledged) {
+            // console.log("Data stored successfully in Switch:", combinedSwitch);
+            results.push({
+              message: "Data stored successfully in Switch",
+              formsub: i,
+            });
+          }
         }
       }
     }
-    doc.end();
+    try {
+      const dynamicData = pdfcontent;
+
+      const templatePath = path.join(__dirname, "template.html");
+      let templateHtml = await fs.readFile(templatePath, "utf8");
+
+      const dynamicHtmlContent = dynamicData
+        .map((item) => itemToHTML(item))
+        .join("");
+
+      const finalHtml = templateHtml.replace(
+        "${htmlContent}",
+        dynamicHtmlContent
+      );
+
+      const browser = await puppeteer.launch();
+      const page = await browser.newPage();
+      await page.setContent(finalHtml, { waitUntil: "networkidle0" });
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+      });
+      await browser.close();
+
+      const pdfPath = path.join(__dirname, "output.pdf");
+      await fs.writeFile(pdfPath, pdfBuffer);
+      if (req.query.method == "Preview") {
+        res.send("PDF generated and saved successfully.");
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).send("Failed to generate PDF");
+    }
     if (results.length > 0) {
       res.status(200).json(results);
     } else {

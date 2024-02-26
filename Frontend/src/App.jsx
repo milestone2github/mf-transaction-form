@@ -9,8 +9,9 @@ import SwitchForm from './components/SwitchForm';
 import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
 import { useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Modal from './components/common/Modal';
+import { setLoading } from './Reducers/UserSlice';
 const baseUrl = 'http://localhost:5000'
 
 function App() {
@@ -24,12 +25,15 @@ function App() {
   const [completeTransactionData, setCompleteTransactionData] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
 
   // get all data states from store 
   const commonData = useSelector(state => state.commonData.value);
   const systematicData = useSelector(state => state.systematicData.value);
   const purchRedempData = useSelector(state => state.purchRedempData.value);
   const switchData = useSelector(state => state.switchData.value);
+
+  const dispatch = useDispatch();
 
   const commonFormSubmitBtn = useRef(null);
 
@@ -142,6 +146,8 @@ function App() {
     e.preventDefault();
     e.stopPropagation();
     
+    if(action === 'Preview') {setIsLoadingPreview(true)}
+
     setCompleteTransactionData(
       prevData => ({ ...prevData, commonData })
     )
@@ -202,6 +208,7 @@ function App() {
       alert.message = <span>Server error! Try again later</span>;
       updateAlert(alert)
     }
+    finally {setIsLoadingPreview(false)}
   }
 
   // method to trigger submit button of common data form 
@@ -235,9 +242,14 @@ function App() {
         <div className="flex gap-4">
         <PrimaryButton action={triggerSubmitBtn} text={'Submit'} width={'320px'} />
         <button 
-          className='border px-8 border-black-900 rounded-md text-black-900 hover:bg-black-900 hover:text-primary-white'
+          className={`border px-8 w-48 border-black-900 rounded-md flex items-center justify-center text-black-900 hover:bg-black-900 hover:text-primary-white disabled:text-black-900 disabled:bg-primary-white disabled:cursor-not-allowed`}
           onClick={triggerSubmitBtn}
-          >Preview
+          disabled={isLoadingPreview}
+          >{isLoadingPreview ? 
+            <><span className='w-6 h-6 inline-block animate-spin me-2 rounded-full border-4 border-[#07a7cf3c] border-t-light-blue'>
+
+            </span>Processing...</> : 'Preview'
+          }
         </button>
         </div>
       </div>

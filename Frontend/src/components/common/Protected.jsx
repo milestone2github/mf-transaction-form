@@ -12,7 +12,7 @@ function Protected({children}) {
     dispatch(setLoading(true));
     const checkLoggedIn = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/user/checkLoggedIn`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/checkLoggedIn`, {
           method: "GET",
           credentials: 'include'
         });

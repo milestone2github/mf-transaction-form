@@ -12,7 +12,7 @@ import { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Modal from './components/common/Modal';
 import { setLoading } from './Reducers/UserSlice';
-const baseUrl = 'http://localhost:5000'
+// const baseUrl = 'http://localhost:5000'
 
 function App() {
   const [alert, setAlert] = useState({
@@ -177,7 +177,7 @@ function App() {
       body: JSON.stringify({ formData })
     };
     try {
-      const response = await fetch(`${baseUrl}/api/data?method=${action}`, requestOptions);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/data?method=${action}`, requestOptions);
       if (!response.ok) {
         alert.message = <span>Server error! Try again later</span>;
         updateAlert(alert)

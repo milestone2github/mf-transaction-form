@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "install:all": "cd frontend && npm install && cd ../backend && npm install",
+    "prebuild": "npm run install:all",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "build:frontend": "cd frontend && npm run build",
+    "postinstall": "npm run install:frontend && npm run install:backend",
+    "start": "node backend/server.js",
+    "build": "npm run build:frontend"
+  }
+}

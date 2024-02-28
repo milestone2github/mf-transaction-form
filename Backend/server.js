@@ -9,7 +9,7 @@ const app = express();
 const port = 5000;
 const session = require("express-session");
 // Require the PDFKit library
-const fs = require("fs").promises;
+const fs = require("fs");
 const puppeteer = require("puppeteer");
 // Configure session middleware
 app.use(
@@ -272,13 +272,13 @@ app.post("/api/data", async (req, res) => {
             );
           }
         }
-        else if(combinedSystematic.systematicTraxType == "STP"){
+        else if(combinedSystematic.systematicTraxType.endsWith('STP')){
           templateContent = fs.readFileSync(
             "template/sys_stp.html",
             "utf-8"
           );
         }
-        else if(combinedSystematic.systematicTraxType == "SWP"){
+        else if(combinedSystematic.systematicTraxType.endsWith('SWP')){
           templateContent = fs.readFileSync(
             "template/sys_swp.html",
             "utf-8"
@@ -333,7 +333,7 @@ app.post("/api/data", async (req, res) => {
           );
           // Read the HTML template file
           let templateContent = fs.readFileSync(
-            "template/purch_redmp.html",
+            "template/purch_redemp.html",
             "utf-8"
           );
           // Replace title of the page
@@ -417,7 +417,12 @@ app.post("/api/data", async (req, res) => {
         }
       }
     }
-    res.end(Buffer.concat(pdfBuffer));
+    // Concatenate all PDF buffers
+    const finalPdfBuffer = Buffer.concat(pdfBuffer);
+
+    // Send the concatenated PDF buffer as the response
+    res.end(finalPdfBuffer);
+    // res.end(Buffer.concat(pdfBuffer));
     await browser.close();
     if (method == "Submit") {
       if (results.length > 0) {

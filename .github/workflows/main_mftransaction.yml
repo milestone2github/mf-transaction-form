@@ -25,20 +25,18 @@ jobs:
           npm run build
           cd ..
 
-      - name: Install dependencies and build backend
+      - name: Install dependencies for backend
         run: |
           cd backend
           npm install
           cd ..
 
-      - name: Move frontend build to backend (if necessary)
-        run: |
-          mv frontend/build backend/public
+      # Removed the move step as it's unnecessary based on your configuration
 
-      - name: Zip backend for deployment
+      - name: Zip backend and frontend for deployment
         run: |
-          cd backend
-          zip -r ../release.zip ./*
+          # Adjust if your backend needs to include frontend/dist explicitly
+          zip -r release.zip backend/ frontend/dist/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
@@ -62,7 +60,6 @@ jobs:
         run: unzip release.zip
       
       - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'MFTransaction'

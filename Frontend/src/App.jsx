@@ -26,6 +26,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+  const [isLoadingSubmission, setIsLoadingSubmission] = useState(false)
 
   // get all data states from store 
   const commonData = useSelector(state => state.commonData.value);
@@ -146,7 +147,9 @@ function App() {
     e.preventDefault();
     e.stopPropagation();
     
+    // set loading state to true based on action 
     if(action === 'Preview') {setIsLoadingPreview(true)}
+    else {setIsLoadingSubmission(true)}
 
     setCompleteTransactionData(
       prevData => ({ ...prevData, commonData })
@@ -170,7 +173,7 @@ function App() {
 
     // api call to submit form data 
     const formData = { commonData, ...completeTransactionData }
-    console.log('form data: ', formData);//test
+    
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -208,7 +211,10 @@ function App() {
       alert.message = <span>Server error! Try again later</span>;
       updateAlert(alert)
     }
-    finally {setIsLoadingPreview(false)}
+    finally {
+      setIsLoadingPreview(false)
+      setIsLoadingSubmission(false)
+    }
   }
 
   // method to trigger submit button of common data form 
@@ -240,7 +246,13 @@ function App() {
               />
         }
         <div className="flex gap-4">
-        <PrimaryButton action={triggerSubmitBtn} text={'Submit'} width={'320px'} />
+        <PrimaryButton 
+          action={triggerSubmitBtn} 
+          disable={isLoadingSubmission ? true : false}
+          text={isLoadingSubmission ? 'Submitting...' : 'Submit'} 
+          width={'320px'} 
+        />
+
         <button 
           className={`border px-8 w-48 border-black-900 rounded-md flex items-center justify-center text-black-900 hover:bg-black-900 hover:text-primary-white disabled:text-black-900 disabled:bg-primary-white disabled:cursor-not-allowed`}
           onClick={triggerSubmitBtn}

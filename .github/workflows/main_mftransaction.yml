@@ -24,6 +24,8 @@ jobs:
           npm install
           npm run build
           cd ..
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Install dependencies for backend
         run: |

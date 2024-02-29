@@ -88,6 +88,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
 });
 
 app.get("/api/user/checkLoggedIn", (req, res) => {
+  console.log('request accepted', req.session?.user);
   if (req.session && req.session.user) {
     // If the session exists and contains user information, the user is logged in
     res.status(200).json({ loggedIn: true });

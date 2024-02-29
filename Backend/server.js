@@ -351,7 +351,7 @@ app.post("/api/data", async (req, res) => {
         // Generate PDF and store it in the buffer
         const pdf = await page.pdf({ format: "A4", printBackground: true });
         pdfBuffer.push(pdf);
-        if (method == "Submit") {
+        if (method === "Submit") {
           const resp = await collection.insertOne(combinedRedemption);
           if (resp.acknowledged) {
             results.push({
@@ -368,7 +368,7 @@ app.post("/api/data", async (req, res) => {
         const combinedSwitch = Object.assign(
           {},
           formData.commonData,
-          formData.switchData[0]
+          formData.switchData[i]
         );
         let templateContent = fs.readFileSync(
           "template/switch.html",
@@ -395,7 +395,7 @@ app.post("/api/data", async (req, res) => {
         // Generate PDF and store it in the buffer
         const pdf = await page.pdf({ format: "A4", printBackground: true });
         pdfBuffer.push(pdf);
-        if ((method = "Submit")) {
+        if ((method === "Submit")) {
           const resswit = await collection.insertOne(combinedSwitch);
           if (resswit.acknowledged) {
             results.push({
@@ -409,11 +409,12 @@ app.post("/api/data", async (req, res) => {
     // Concatenate all PDF buffers
     const finalPdfBuffer = await mergePdfs(pdfBuffer);
 
-    // Send the concatenated PDF buffer as the response
-    res.end(finalPdfBuffer);
-    // res.end(Buffer.concat(pdfBuffer));
-    await browser.close();
-    if (method == "Submit") {
+    if (method === "Preview") {
+      // Send the concatenated PDF buffer as the response
+      res.end(finalPdfBuffer);
+      await browser.close();
+    }
+    else {
       if (results.length > 0) {
         res.status(200).json(results);
       } else {

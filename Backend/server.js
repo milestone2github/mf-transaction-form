@@ -11,6 +11,7 @@ const session = require("express-session");
 // Require the PDFKit library
 const fs = require("fs");
 const puppeteer = require("puppeteer");
+const mergePdfs = require("./helpers/combinePdf");
 // Configure session middleware 
 app.use(
   session({
@@ -60,7 +61,6 @@ app.get("/auth/zoho", (req, res) => {
 });
 
 app.get("/auth/zoho/callback", async (req, res) => {
-  console.log('requested to zoho/callback'); //test
   const code = req.query.code;
   try {
     const response = await axios.post(
@@ -89,7 +89,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
 });
 
 app.get("/api/user/checkLoggedIn", (req, res) => {
-  console.log('request accepted', req.session?.user);
+  
   if (req.session && req.session.user) {
     // If the session exists and contains user information, the user is logged in
     res.status(200).json({ loggedIn: true });
@@ -239,12 +239,14 @@ app.post("/api/data", async (req, res) => {
     if (formData.systematicData) {
       const collection = database.collection("systematic"); // Corrected collection name
       for (let i = 0; i < formData.systematicData.length; i++) {
+        // let newpage = await browser.newPage();
+
         const combinedSystematic = Object.assign(
           {},
           formData.commonData,
           formData.systematicData[i]
         );
-        console.log(combinedSystematic);
+        
         // Read the HTML template file
         let templateContent = fs.readFileSync(
           "template/sys_sip_pause.html",
@@ -299,13 +301,13 @@ app.post("/api/data", async (req, res) => {
         const pdf = await page.pdf({ format: "A4", printBackground: true });
         pdfBuffer.push(pdf);
 
+        // Close the new page to free up resources
+        // await newpage.close();
+
         if (method === "Submit") {
           const ressys = await collection.insertOne(combinedSystematic); // Corrected variable name
           if (ressys.acknowledged) {
-            console.log(
-              "Data stored successfully in systematic:", // Corrected log message
-              combinedSystematic
-            );
+            console.log("Data stored successfully in systematic");
             results.push({
               message: "Data stored successfully in systematic", // Corrected message
               formsub: i,
@@ -352,10 +354,6 @@ app.post("/api/data", async (req, res) => {
         if (method == "Submit") {
           const resp = await collection.insertOne(combinedRedemption);
           if (resp.acknowledged) {
-            // console.log(
-            //   "Data stored successfully in predemption:",
-            //   combinedRedemption
-            // );
             results.push({
               message: "Data stored successfully in predemption",
               formsub: i,
@@ -400,7 +398,6 @@ app.post("/api/data", async (req, res) => {
         if ((method = "Submit")) {
           const resswit = await collection.insertOne(combinedSwitch);
           if (resswit.acknowledged) {
-            // console.log("Data stored successfully in Switch:", combinedSwitch);
             results.push({
               message: "Data stored successfully in Switch",
               formsub: i,
@@ -410,7 +407,7 @@ app.post("/api/data", async (req, res) => {
       }
     }
     // Concatenate all PDF buffers
-    const finalPdfBuffer = Buffer.concat(pdfBuffer);
+    const finalPdfBuffer = await mergePdfs(pdfBuffer);
 
     // Send the concatenated PDF buffer as the response
     res.end(finalPdfBuffer);

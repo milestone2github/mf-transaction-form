@@ -6,18 +6,18 @@ const cors = require("cors");
 const { MongoClient } = require("mongodb");
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 const session = require("express-session");
 // Require the PDFKit library
 const fs = require("fs");
 const puppeteer = require("puppeteer");
-// Configure session middleware
+// Configure session middleware 
 app.use(
   session({
-    secret: "secret_key", // Use a real secret in production
+    secret: "2376c6ff297c74fdf7c0ce82da958a2dc2b310677bd4cb8b739a9a0b01de62dcab75518eef390f7c95abb4778c8d1f9cfe43d877d4d95d861d17bd77c2449e94", // Use a real secret in production
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if using https
+    cookie: { secure: true }, // Set to true if using https
   })
 );
 
@@ -215,17 +215,7 @@ app.get("/api/scheme", async (req, res) => {
   }
 });
 
-// // The Zoho authentication routes remain unchanged as they do not interact with MongoDB
-// function itemToHTML(item) {
-//   let html = `<h2>${item.title}</h2><div>`;
-//   Object.entries(item.content).forEach(([key, value]) => {
-//     // Format the key to be more readable, if necessary
-//     const formattedKey = key.replace(/([A-Z])/g, " $1").trim(); // Add space before capital letters
-//     html += `<p><strong>${formattedKey}:</strong> ${value}</p>`;
-//   });
-//   html += `</div><div class="page-break"></div>`;
-//   return html;
-// }
+
 app.post("/api/data", async (req, res) => {
   const method = req.query.method;
   try {
@@ -239,7 +229,7 @@ app.post("/api/data", async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=filled_form.pdf"
+      "attachment; filename=mf_transaction.pdf"
     );
 
     // Create a buffer to store the PDF data
@@ -258,33 +248,33 @@ app.post("/api/data", async (req, res) => {
           "template/sys_sip_pause.html",
           "utf-8"
         );
-        if(combinedSystematic.systematicTraxType == "SIP"){
-          if(combinedSystematic.systematicTraxFor == "Registration" || combinedSystematic.systematicTraxFor == "Cancellation"){
+        if (combinedSystematic.systematicTraxType == "SIP") {
+          if (combinedSystematic.systematicTraxFor == "Registration" || combinedSystematic.systematicTraxFor == "Cancellation") {
             templateContent = fs.readFileSync(
               "template/sys_sip_registration.html",
               "utf-8"
-            );    
+            );
           }
-          else{
+          else {
             templateContent = fs.readFileSync(
               "template/sys_sip_pause.html",
               "utf-8"
             );
           }
         }
-        else if(combinedSystematic.systematicTraxType.endsWith('STP')){
+        else if (combinedSystematic.systematicTraxType.endsWith('STP')) {
           templateContent = fs.readFileSync(
             "template/sys_stp.html",
             "utf-8"
           );
         }
-        else if(combinedSystematic.systematicTraxType.endsWith('SWP')){
+        else if (combinedSystematic.systematicTraxType.endsWith('SWP')) {
           templateContent = fs.readFileSync(
             "template/sys_swp.html",
             "utf-8"
           );
         }
-        
+
         // Replace title of the page
         let filledTemplate = templateContent.replace(
           "{{pageTitle}}",
@@ -306,7 +296,7 @@ app.post("/api/data", async (req, res) => {
         // Generate PDF and store it in the buffer
         const pdf = await page.pdf({ format: "A4", printBackground: true });
         pdfBuffer.push(pdf);
-        
+
         if (method === "Submit") {
           const ressys = await collection.insertOne(combinedSystematic); // Corrected variable name
           if (ressys.acknowledged) {
@@ -322,7 +312,7 @@ app.post("/api/data", async (req, res) => {
         }
       }
     }
-    
+
     if (formData.purchRedempData) {
       const collection = database.collection("predemption");
       for (let i = 0; i < formData.purchRedempData.length; i++) {
@@ -330,47 +320,47 @@ app.post("/api/data", async (req, res) => {
           {},
           formData.commonData,
           formData.purchRedempData[i]
+        );
+        // Read the HTML template file
+        let templateContent = fs.readFileSync(
+          "template/purch_redemp.html",
+          "utf-8"
+        );
+        // Replace title of the page
+        let filledTemplate = templateContent.replace(
+          "{{pageTitle}}",
+          "Purchase/Redemption Form"
+        );
+
+        // Replace placeholders with actual data
+        for (const key in combinedRedemption) {
+          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
+          filledTemplate = filledTemplate.replace(
+            regex,
+            combinedRedemption[key]
           );
-          // Read the HTML template file
-          let templateContent = fs.readFileSync(
-            "template/purch_redemp.html",
-            "utf-8"
-          );
-          // Replace title of the page
-          let filledTemplate = templateContent.replace(
-            "{{pageTitle}}",
-            "Purchase/Redemption Form"
-          );
-      
-          // Replace placeholders with actual data
-          for (const key in combinedRedemption) {
-            const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-            filledTemplate = filledTemplate.replace(
-              regex,
-              combinedRedemption[key]
-            );
-          }
-      
-          // Set HTML content of the page
-          await page.setContent(filledTemplate);
-      
-          // Generate PDF and store it in the buffer
-          const pdf = await page.pdf({ format: "A4", printBackground: true });
-          pdfBuffer.push(pdf);
-          if (method == "Submit") {
-            const resp = await collection.insertOne(combinedRedemption);
+        }
+
+        // Set HTML content of the page
+        await page.setContent(filledTemplate);
+
+        // Generate PDF and store it in the buffer
+        const pdf = await page.pdf({ format: "A4", printBackground: true });
+        pdfBuffer.push(pdf);
+        if (method == "Submit") {
+          const resp = await collection.insertOne(combinedRedemption);
           if (resp.acknowledged) {
             // console.log(
-              //   "Data stored successfully in predemption:",
-              //   combinedRedemption
-              // );
-              results.push({
-                message: "Data stored successfully in predemption",
-                formsub: i,
-              });
-            }
+            //   "Data stored successfully in predemption:",
+            //   combinedRedemption
+            // );
+            results.push({
+              message: "Data stored successfully in predemption",
+              formsub: i,
+            });
           }
         }
+      }
     }
     if (formData.switchData) {
       const collection = database.collection("Switch");
@@ -389,7 +379,7 @@ app.post("/api/data", async (req, res) => {
           "{{pageTitle}}",
           "Switch Form"
         );
-    
+
         // Replace placeholders with actual data
         for (const key in combinedSwitch) {
           const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
@@ -398,10 +388,10 @@ app.post("/api/data", async (req, res) => {
             combinedSwitch[key]
           );
         }
-    
+
         // Set HTML content of the page
         await page.setContent(filledTemplate);
-    
+
         // Generate PDF and store it in the buffer
         const pdf = await page.pdf({ format: "A4", printBackground: true });
         pdfBuffer.push(pdf);
@@ -445,5 +435,5 @@ app.get("*", (req, res) => {
 // Start the server and connect to MongoDB
 app.listen(port, async () => {
   await connectToMongoDB();
-  console.log(`Server running on port ${port} www.localhost:5000/`);
+  console.log(`Server running on http://localhost:${port}/`);
 });

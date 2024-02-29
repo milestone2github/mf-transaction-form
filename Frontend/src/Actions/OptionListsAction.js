@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-const baseUrl = 'http://localhost:5000/api'
+const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api`
 
 // Async thunk for fetching AMC name options
 export const fetchInvestorData = createAsyncThunk(

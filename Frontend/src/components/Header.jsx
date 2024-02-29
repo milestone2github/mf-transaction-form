@@ -56,7 +56,7 @@ function Header({ handleSubmit, submitBtn }) {
   // Method to handle logout
 const handleLogout = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/logout`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logout`, {
       method: 'POST',
       credentials: 'include', 
     });

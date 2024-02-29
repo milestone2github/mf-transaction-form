@@ -170,7 +170,7 @@ function App() {
 
     // api call to submit form data 
     const formData = { commonData, ...completeTransactionData }
-    
+    console.log('form data: ', formData);//test
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

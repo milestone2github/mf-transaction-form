@@ -15,7 +15,7 @@ const mergePdfs = require("./helpers/combinePdf");
 // Configure session middleware 
 app.use(
   session({
-    secret: "2376c6ff297c74fdf7c0ce82da958a2dc2b310677bd4cb8b739a9a0b01de62dcab75518eef390f7c95abb4778c8d1f9cfe43d877d4d95d861d17bd77c2449e94", // Use a real secret in production
+    secret: process.env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }, // Set to true if using https

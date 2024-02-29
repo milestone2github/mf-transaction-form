@@ -6,9 +6,8 @@ const cors = require("cors");
 const { MongoClient } = require("mongodb");
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5000; 
 const session = require("express-session");
-// Require the PDFKit library
 const fs = require("fs");
 const puppeteer = require("puppeteer");
 const mergePdfs = require("./helpers/combinePdf");
@@ -224,7 +223,7 @@ app.post("/api/data", async (req, res) => {
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--headless', '--disable-gpu'] });
     const page = await browser.newPage();
 
     // Set up response headers

@@ -7,6 +7,7 @@ const { MongoClient } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 const session = require("express-session");
+const sendToZohoSheet = require("./utils/sendToZohoSheet");
 
 // Configure session middleware 
 app.use(
@@ -241,6 +242,12 @@ app.post("/api/data", async (req, res) => {
             message: "Data stored successfully in systematic", // Corrected message
             formsub: i,
           });
+
+          // add mongo's id field to systematic data 
+          combinedSystematic._id = ressys.insertedId.toString();
+
+          // send data to zoho sheet 
+          sendToZohoSheet(combinedSystematic, `Systematic form ${i+1} sent to zoho sheet`)
         }
       }
     }
@@ -264,6 +271,12 @@ app.post("/api/data", async (req, res) => {
             message: "Data stored successfully in predemption",
             formsub: i,
           });
+
+          // add mongo's id field to purchase/redemption data 
+          combinedRedemption._id = resp.insertedId.toString();
+
+          // send data to zoho sheet 
+          sendToZohoSheet(combinedRedemption, `Purchase/Redemption form ${i+1} sent to zoho sheet`)
         }
 
       }
@@ -288,6 +301,12 @@ app.post("/api/data", async (req, res) => {
             message: "Data stored successfully in Switch",
             formsub: i,
           });
+
+          // add mongo's id field to purchase/redemption data 
+          combinedSwitch._id = resswit.insertedId.toString();
+
+          // send data to zoho sheet 
+          sendToZohoSheet(combinedSwitch, `Switch form ${i+1} sent to zoho sheet`)
         }
 
       }

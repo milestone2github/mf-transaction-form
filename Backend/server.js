@@ -223,7 +223,7 @@ app.post("/api/data", async (req, res) => {
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--headless', '--disable-gpu'] });
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-gpu'] });
     const page = await browser.newPage();
 
     // Set up response headers

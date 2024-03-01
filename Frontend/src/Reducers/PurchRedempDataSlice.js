@@ -33,10 +33,13 @@ const purchRedempDataSlice = createSlice({
             if (index >= 0 && index < state.value.length) {
                 state.value.splice(index, 1); // Remove the item at the specified index
             }
+        },
+        resetPurchRedempData: (state) => {
+            state.value = [hollowPurchRedempObj];
         }
     }
 });
 
-export const { handleChange, handleSelect, handleAdd, handleRemove } = purchRedempDataSlice.actions;
+export const { handleChange, handleSelect, handleAdd, handleRemove, resetPurchRedempData } = purchRedempDataSlice.actions;
 
 export default purchRedempDataSlice.reducer;

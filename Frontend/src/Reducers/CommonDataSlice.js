@@ -18,9 +18,19 @@ const commonDataSlice = createSlice({
             // Update the specific field in the state
             state.value[name] = value;
         },
+        resetCommonData: (state) => {
+            state.value = {
+                email: '',
+                transactionPreference: 'ASAP',
+                registrant: '',
+                panNumber: '',
+                investorName: '',
+                familyHead: ''
+            }
+        }
     }
 })
 
-export const { handleChange } = commonDataSlice.actions;
+export const { handleChange, resetCommonData } = commonDataSlice.actions;
 
 export default commonDataSlice.reducer;

@@ -33,10 +33,13 @@ const switchDataSlice = createSlice({
             if (index >= 0 && index < state.value.length) {
                 state.value.splice(index, 1); // Remove the item at the specified index
             }
+        },
+        resetSwitchData: (state) => {
+            state.value = [hollowSwitchObj];
         }
     }
 });
 
-export const { handleChange, handleSelect, handleAdd, handleRemove } = switchDataSlice.actions;
+export const { handleChange, handleSelect, handleAdd, handleRemove, resetSwitchData } = switchDataSlice.actions;
 
 export default switchDataSlice.reducer;

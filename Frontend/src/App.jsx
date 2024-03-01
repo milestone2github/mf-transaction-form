@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 import PrimaryButton from './components/common/PrimaryButton';
 import Tabs from './components/common/Tabs';
@@ -10,22 +10,20 @@ import useQuery from './hooks/useQuery';
 import Alert from './components/common/Alert';
 import { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import Modal from './components/common/Modal';
-import { setLoading } from './Reducers/UserSlice';
-// const baseUrl = 'http://localhost:5000'
+import { resetSystematicData } from './Reducers/SystematicDataSlice';
+import { resetPurchRedempData } from './Reducers/PurchRedempDataSlice';
+import { resetSwitchData } from './Reducers/SwitchDataSlice';
+import { resetCommonData } from './Reducers/CommonDataSlice';
 
 function App() {
   const [alert, setAlert] = useState({
     isOn: false,
     type: 'error',
     header: 'Systematic Form error',
-    message: 'Missing xyz field in systematic form'
+    message: 'Missing field in systematic form'
   })
 
   const [completeTransactionData, setCompleteTransactionData] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState('');
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [isLoadingSubmission, setIsLoadingSubmission] = useState(false)
 
   // get all data states from store 
@@ -142,14 +140,12 @@ function App() {
   }
 
   // method to submit form 
-  let action = '';
   const submitForm = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // set loading state to true based on action 
-    if(action === 'Preview') {setIsLoadingPreview(true)}
-    else {setIsLoadingSubmission(true)}
+
+    // set loading state to true 
+    setIsLoadingSubmission(true)
 
     setCompleteTransactionData(
       prevData => ({ ...prevData, commonData })
@@ -173,53 +169,48 @@ function App() {
 
     // api call to submit form data 
     const formData = { commonData, ...completeTransactionData }
-    
+
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ formData })
     };
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/data?method=${action}`, requestOptions);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/data`, requestOptions);
+      const data = await response.json();
+
       if (!response.ok) {
-        alert.message = <span>Server error! Try again later</span>;
+        alert.message = data?.message? <span>{data.message}</span> : <span>Server error! Try again later</span>;
         updateAlert(alert)
         return;
       }
 
-      // if clicked preview, show the pdf 
-      if(action === 'Preview') {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setPdfUrl(url);
-        setIsModalOpen(true);
-      }
-      
-      // if clicked submit show the status 
-      else {
-        const data = await response.json();
-        console.log('submitted')
-        updateAlert({
-          isOn: true,
-          type: 'success',
-          header: 'Form submitted',
-          message: ''
-        })
-      }
+      console.log('submitted')
+      updateAlert({
+        isOn: true,
+        type: 'success',
+        header: 'Form submitted',
+        message: ''
+      })
+
+      // clear the form 
+      setCompleteTransactionData({});
+      dispatch(resetCommonData());
+      dispatch(resetSystematicData());
+      dispatch(resetPurchRedempData());
+      dispatch(resetSwitchData());
     } catch (error) {
       console.log(error);
       alert.message = <span>Server error! Try again later</span>;
       updateAlert(alert)
     }
     finally {
-      setIsLoadingPreview(false)
       setIsLoadingSubmission(false)
     }
   }
 
   // method to trigger submit button of common data form 
   const triggerSubmitBtn = (e) => {
-    action = e.target.innerText;
     e.preventDefault();
     // e.stopPropagation();
     commonFormSubmitBtn.current.click();
@@ -246,28 +237,15 @@ function App() {
               />
         }
         <div className="flex gap-4">
-        <PrimaryButton 
-          action={triggerSubmitBtn} 
-          disable={isLoadingSubmission ? true : false}
-          text={isLoadingSubmission ? 'Submitting...' : 'Submit'} 
-          width={'320px'} 
-        />
+          <PrimaryButton
+            action={triggerSubmitBtn}
+            disable={isLoadingSubmission ? true : false}
+            text={isLoadingSubmission ? 'Submitting...' : 'Submit'}
+            width={'320px'}
+          />
 
-        <button 
-          className={`border px-8 w-48 border-black-900 rounded-md flex items-center justify-center text-black-900 hover:bg-black-900 hover:text-primary-white disabled:text-black-900 disabled:bg-primary-white disabled:cursor-not-allowed`}
-          onClick={triggerSubmitBtn}
-          disabled={isLoadingPreview}
-          >{isLoadingPreview ? 
-            <><span className='w-6 h-6 inline-block animate-spin me-2 rounded-full border-4 border-[#07a7cf3c] border-t-light-blue'>
-
-            </span>Processing...</> : 'Preview'
-          }
-        </button>
         </div>
       </div>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <iframe src={pdfUrl} style={{ width: '768px', height: 'calc(100vh - 32px)' }} title="PDF" />
-      </Modal>
     </div>
   )
 }

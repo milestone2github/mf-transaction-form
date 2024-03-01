@@ -33,10 +33,13 @@ const systematicDataSlice = createSlice({
             if (index >= 0 && index < state.value.length) {
                 state.value.splice(index, 1); // Remove the item at the specified index
             }
+        },
+        resetSystematicData: (state) => {
+            state.value = [hollowSystematicObj];
         }
     }
 });
 
-export const { handleChange, handleSelect, handleAdd, handleRemove } = systematicDataSlice.actions;
+export const { handleChange, handleSelect, handleAdd, handleRemove, resetSystematicData } = systematicDataSlice.actions;
 
 export default systematicDataSlice.reducer;

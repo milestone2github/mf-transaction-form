@@ -4,13 +4,10 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
-
 const app = express();
-const port = process.env.PORT || 5000; 
+const port = process.env.PORT || 5000;
 const session = require("express-session");
-const fs = require("fs");
-const puppeteer = require("puppeteer");
-const mergePdfs = require("./helpers/combinePdf");
+
 // Configure session middleware 
 app.use(
   session({
@@ -88,7 +85,7 @@ app.get("/auth/zoho/callback", async (req, res) => {
 });
 
 app.get("/api/user/checkLoggedIn", (req, res) => {
-  
+
   if (req.session && req.session.user) {
     // If the session exists and contains user information, the user is logged in
     res.status(200).json({ loggedIn: true });
@@ -182,6 +179,7 @@ app.get("/api/amc", async (req, res) => {
     res.status(500).send("Error while fetching AMC details");
   }
 });
+
 app.post("/api/logout", (req, res) => {
   if (req.session) {
     req.session.destroy((err) => {
@@ -216,102 +214,33 @@ app.get("/api/scheme", async (req, res) => {
   }
 });
 
-
+// route to submit form 
 app.post("/api/data", async (req, res) => {
   const method = req.query.method;
   try {
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--headless', '--disable-gpu'] });
-    const page = await browser.newPage();
 
-    // Set up response headers
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=mf_transaction.pdf"
-    );
-
-    // Create a buffer to store the PDF data
-    const pdfBuffer = [];
     if (formData.systematicData) {
       const collection = database.collection("systematic"); // Corrected collection name
       for (let i = 0; i < formData.systematicData.length; i++) {
-        // let newpage = await browser.newPage();
 
+        // combine common data and systematic data 
         const combinedSystematic = Object.assign(
           {},
           formData.commonData,
           formData.systematicData[i]
         );
-        
-        // Read the HTML template file
-        let templateContent = fs.readFileSync(
-          "template/sys_sip_pause.html",
-          "utf-8"
-        );
-        if (combinedSystematic.systematicTraxType == "SIP") {
-          if (combinedSystematic.systematicTraxFor == "Registration" || combinedSystematic.systematicTraxFor == "Cancellation") {
-            templateContent = fs.readFileSync(
-              "template/sys_sip_registration.html",
-              "utf-8"
-            );
-          }
-          else {
-            templateContent = fs.readFileSync(
-              "template/sys_sip_pause.html",
-              "utf-8"
-            );
-          }
-        }
-        else if (combinedSystematic.systematicTraxType.endsWith('STP')) {
-          templateContent = fs.readFileSync(
-            "template/sys_stp.html",
-            "utf-8"
-          );
-        }
-        else if (combinedSystematic.systematicTraxType.endsWith('SWP')) {
-          templateContent = fs.readFileSync(
-            "template/sys_swp.html",
-            "utf-8"
-          );
-        }
 
-        // Replace title of the page
-        let filledTemplate = templateContent.replace(
-          "{{pageTitle}}",
-          "Systematic Form"
-        );
-
-        // Replace placeholders with actual data
-        for (const key in combinedSystematic) {
-          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-          filledTemplate = filledTemplate.replace(
-            regex,
-            combinedSystematic[key]
-          );
-        }
-
-        // Set HTML content of the page
-        await page.setContent(filledTemplate);
-
-        // Generate PDF and store it in the buffer
-        const pdf = await page.pdf({ format: "A4", printBackground: true });
-        pdfBuffer.push(pdf);
-
-        // Close the new page to free up resources
-        // await newpage.close();
-
-        if (method === "Submit") {
-          const ressys = await collection.insertOne(combinedSystematic); // Corrected variable name
-          if (ressys.acknowledged) {
-            console.log("Data stored successfully in systematic");
-            results.push({
-              message: "Data stored successfully in systematic", // Corrected message
-              formsub: i,
-            });
-          }
+        // store systematic data in database 
+        const ressys = await collection.insertOne(combinedSystematic); // Corrected variable name
+        if (ressys.acknowledged) {
+          console.log("Data stored successfully in systematic");
+          results.push({
+            message: "Data stored successfully in systematic", // Corrected message
+            formsub: i,
+          });
         }
       }
     }
@@ -319,114 +248,65 @@ app.post("/api/data", async (req, res) => {
     if (formData.purchRedempData) {
       const collection = database.collection("predemption");
       for (let i = 0; i < formData.purchRedempData.length; i++) {
+
+        // combine common data with purchase/redemption 
         const combinedRedemption = Object.assign(
           {},
           formData.commonData,
           formData.purchRedempData[i]
         );
-        // Read the HTML template file
-        let templateContent = fs.readFileSync(
-          "template/purch_redemp.html",
-          "utf-8"
-        );
-        // Replace title of the page
-        let filledTemplate = templateContent.replace(
-          "{{pageTitle}}",
-          "Purchase/Redemption Form"
-        );
 
-        // Replace placeholders with actual data
-        for (const key in combinedRedemption) {
-          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-          filledTemplate = filledTemplate.replace(
-            regex,
-            combinedRedemption[key]
-          );
+        // store data in database 
+        const resp = await collection.insertOne(combinedRedemption);
+        if (resp.acknowledged) {
+          results.push({
+            message: "Data stored successfully in predemption",
+            formsub: i,
+          });
         }
 
-        // Set HTML content of the page
-        await page.setContent(filledTemplate);
-
-        // Generate PDF and store it in the buffer
-        const pdf = await page.pdf({ format: "A4", printBackground: true });
-        pdfBuffer.push(pdf);
-        if (method === "Submit") {
-          const resp = await collection.insertOne(combinedRedemption);
-          if (resp.acknowledged) {
-            results.push({
-              message: "Data stored successfully in predemption",
-              formsub: i,
-            });
-          }
-        }
       }
     }
+
     if (formData.switchData) {
       const collection = database.collection("Switch");
       for (let i = 0; i < formData.switchData.length; i++) {
+
+        // combine common data and switch data 
         const combinedSwitch = Object.assign(
           {},
           formData.commonData,
           formData.switchData[i]
         );
-        let templateContent = fs.readFileSync(
-          "template/switch.html",
-          "utf-8"
-        );
-        // Replace title of the page
-        let filledTemplate = templateContent.replace(
-          "{{pageTitle}}",
-          "Switch Form"
-        );
 
-        // Replace placeholders with actual data
-        for (const key in combinedSwitch) {
-          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-          filledTemplate = filledTemplate.replace(
-            regex,
-            combinedSwitch[key]
-          );
+        // store switch data to database 
+        const resswit = await collection.insertOne(combinedSwitch);
+        if (resswit.acknowledged) {
+          results.push({
+            message: "Data stored successfully in Switch",
+            formsub: i,
+          });
         }
 
-        // Set HTML content of the page
-        await page.setContent(filledTemplate);
-
-        // Generate PDF and store it in the buffer
-        const pdf = await page.pdf({ format: "A4", printBackground: true });
-        pdfBuffer.push(pdf);
-        if ((method === "Submit")) {
-          const resswit = await collection.insertOne(combinedSwitch);
-          if (resswit.acknowledged) {
-            results.push({
-              message: "Data stored successfully in Switch",
-              formsub: i,
-            });
-          }
-        }
       }
     }
-    // Concatenate all PDF buffers
-    const finalPdfBuffer = await mergePdfs(pdfBuffer);
 
-    if (method === "Preview") {
-      // Send the concatenated PDF buffer as the response
-      res.end(finalPdfBuffer);
-      await browser.close();
+
+    if (results.length > 0) {
+      res.status(200).json(results);
+    } else {
+      res
+        .status(400)
+        .json({ message: "No valid form data provided" });
     }
-    else {
-      if (results.length > 0) {
-        res.status(200).json(results);
-      } else {
-        res
-          .status(400)
-          .json({ message: "No valid data provided for insertion" });
-      }
-    }
+
   } catch (error) {
-    console.error("Error during data insertion", error);
-    res.status(500).send("Error during data insertion");
+    console.error("Error during submission of Form", error);
+    res.status(500).send("Error during submission of Form");
   }
 });
+
+// wildcard route to serve react using express 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });

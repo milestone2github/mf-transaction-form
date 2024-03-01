@@ -216,7 +216,7 @@ app.get("/api/scheme", async (req, res) => {
 
 // route to submit form 
 app.post("/api/data", async (req, res) => {
-  const method = req.query.method;
+  
   try {
     const database = req.db2;
     let formData = req.body.formData;
@@ -259,6 +259,7 @@ app.post("/api/data", async (req, res) => {
         // store data in database 
         const resp = await collection.insertOne(combinedRedemption);
         if (resp.acknowledged) {
+          console.log("Data stored successfully in predemption");
           results.push({
             message: "Data stored successfully in predemption",
             formsub: i,
@@ -282,6 +283,7 @@ app.post("/api/data", async (req, res) => {
         // store switch data to database 
         const resswit = await collection.insertOne(combinedSwitch);
         if (resswit.acknowledged) {
+          console.log("Data stored successfully in Switch");
           results.push({
             message: "Data stored successfully in Switch",
             formsub: i,

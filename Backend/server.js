@@ -4,14 +4,12 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
-
 const app = express();
-const port = process.env.PORT || 5000; 
+const port = process.env.PORT || 5000;
 const session = require("express-session");
-const fs = require("fs");
-const puppeteer = require("puppeteer");
-const mergePdfs = require("./helpers/combinePdf");
-// Configure session middleware 
+const sendToZohoSheet = require("./utils/sendToZohoSheet");
+
+// Configure session middleware
 app.use(
   session({
     secret: process.env.EXPRESS_SESSION_SECRET,
@@ -36,7 +34,6 @@ async function connectToMongoDB() {
     await mongoClient.connect();
     db = mongoClient.db("Milestone");
     db2 = mongoClient.db("mftransactiondb");
-    db3 = mongoClient.db("mftransactiondb");
     console.log("Connected to MongoDB");
   } catch (error) {
     console.error("Could not connect to MongoDB", error);
@@ -55,14 +52,13 @@ app.use(dbAccess); // Use the middleware
 
 // Now, in your route handlers, you can access the database connection via `req.db`
 app.get("/auth/zoho", (req, res) => {
-  const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=Aaaserver.profile.Read&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
+  const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=ZohoCRM.users.READ&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
   res.redirect(authUrl);
 });
-
 app.get("/auth/zoho/callback", async (req, res) => {
   const code = req.query.code;
   try {
-    const response = await axios.post(
+    const tokenResponse = await axios.post(
       "https://accounts.zoho.com/oauth/v2/token",
       null,
       {
@@ -76,19 +72,35 @@ app.get("/auth/zoho/callback", async (req, res) => {
       }
     );
 
-    // Assuming response.data contains the user information
-    // Create session here
-    req.session.user = response.data; // Store user data in session
-    // res.status(200).json({ loggedIn: true });
+    const accessToken = tokenResponse.data.access_token;
+    const response = await axios.get(
+      "https://www.zohoapis.com/crm/v3/users?type=CurrentUser",
+      {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${accessToken}`,
+        },
+      }
+    );
+    const userName = response.data.users[0].full_name;
+    const userEmail = response.data.users[0].email;
+    // Store user data in session
+    req.session.user = {
+      name: userName,
+      email: userEmail,
+      accessToken: accessToken, // Storing the access token might be useful for future API calls
+    };
+
     res.redirect("/");
   } catch (error) {
-    console.error("Error during authentication", error);
+    console.error(
+      "Error during authentication or fetching user details",
+      error
+    );
     res.status(500).send("Authentication failed");
   }
 });
 
 app.get("/api/user/checkLoggedIn", (req, res) => {
-  
   if (req.session && req.session.user) {
     // If the session exists and contains user information, the user is logged in
     res.status(200).json({ loggedIn: true });
@@ -147,36 +159,45 @@ app.get("/api/investors", async (req, res) => {
 
 app.get("/api/folios", async (req, res) => {
   try {
-    const collection = req.db.collection("MintDb2");
-    const { pan } = req.query;
-    if (!pan) {
-      return res.status(400).send("pan parameter is required");
-    }
-    var query;
-    if (pan) {
-      query = { pan: pan };
+    const collection = req.db.collection("BSEOrderStatus"); // Ensure this is the correct collection name
+    const { keywords } = req.query; // Assuming 'keywords' is the client name you're searching for
+    if (!keywords) {
+      return res.status(400).send("Client name parameter is required");
     }
 
-    const result = await collection.find(query).toArray();
+    var query = { ClientName: new RegExp(keywords, "i") }; // Case-insensitive search for client name
+
+    const documents = await collection.find(query).toArray();
+
+    const result = documents.map((doc) => {
+      const folio =
+        doc.FolioNo && doc.FolioNo.trim() !== "" ? doc.FolioNo : doc.DPFolioNo;
+      return {
+        ...doc,
+        FolioOrDPFolio: folio, // Add a new field to indicate the chosen folio number
+      };
+    });
+
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error fetching folio's", error);
-    res.status(500).send("Error while fetching folio's");
+    console.error("Error fetching folios", error);
+    res.status(500).send("Error while fetching folios");
   }
 });
 
 app.get("/api/amc", async (req, res) => {
   try {
-    const collection = req.db.collection("amc"); // Replace YourCollectionName with the actual name of your collection
-    const { keywords } = req.query; // This line extracts the AMC Code from the query parameters
+    const collection = req.db.collection("mfschemesDb"); // Assuming req.db is correctly set up to access your MongoDB
+    const { keywords } = req.query; // Extracting keywords from query parameters
     if (!keywords) {
       return res.status(400).send("Keywords are required to get AMC names");
     }
-    var query = { "AMC Code": new RegExp(keywords, "i") }; // This line constructs the query to find documents by AMC Code
+    var query = { "FUND NAME": new RegExp(keywords, "i") }; // Constructing a case-insensitive search query
+
     const result = await collection
-      .find(query, { projection: { "AMC Code": 1, _id: 0 } })
-      .toArray(); // This line executes the query and converts the result to an array
-    res.status(200).json(result); // This line sends the query result back to the client as JSON
+      .find(query, { projection: { "FUND NAME": 1, _id: 0 } })
+      .toArray();
+    res.status(200).json(result); // Sending the result back as JSON
   } catch (error) {
     console.error("Error fetching AMC details", error);
     res.status(500).send("Error while fetching AMC details");
@@ -197,18 +218,18 @@ app.post("/api/logout", (req, res) => {
   }
 });
 
-app.get("/api/scheme", async (req, res) => {
+app.get("/api/schemename", async (req, res) => {
   try {
-    const collection = req.db.collection("amc"); // Replace YourCollectionName with the actual name of your collection
+    const collection = req.db.collection("mfschemesDb"); // Replace YourCollectionName with the actual name of your collection
     const { amc, keywords } = req.query; // This line extracts the AMC Code from the query parameters
     if (!amc) {
       return res.status(400).send("AMC Code parameter is required");
     }
-    if (!scm) {
+    if (!keywords) {
       return res.status(400).send("scm Code parameter is required");
     }
-    var query = { "AMC Code": amc, "Scheme Code": new RegExp(keywords, "i") }; // This line constructs the query to find documents by AMC Code
-    const result = await collection.find(query).toArray(); // This line executes the query and converts the result to an array
+    var query = { "FUND NAME": amc, scheme_name: new RegExp(keywords, "i") };
+    const result = await collection.find(query).toArray(); // Fetch documents based on the query
     res.status(200).json(result); // This line sends the query result back to the client as JSON
   } catch (error) {
     console.error("Error fetching scheme details", error);
@@ -216,102 +237,40 @@ app.get("/api/scheme", async (req, res) => {
   }
 });
 
-
+// route to submit form
 app.post("/api/data", async (req, res) => {
-  const method = req.query.method;
   try {
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-gpu'] });
-    const page = await browser.newPage();
 
-    // Set up response headers
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=mf_transaction.pdf"
-    );
-
-    // Create a buffer to store the PDF data
-    const pdfBuffer = [];
     if (formData.systematicData) {
       const collection = database.collection("systematic"); // Corrected collection name
       for (let i = 0; i < formData.systematicData.length; i++) {
-        // let newpage = await browser.newPage();
-
+        // combine common data and systematic data
         const combinedSystematic = Object.assign(
           {},
           formData.commonData,
           formData.systematicData[i]
         );
-        
-        // Read the HTML template file
-        let templateContent = fs.readFileSync(
-          "template/sys_sip_pause.html",
-          "utf-8"
-        );
-        if (combinedSystematic.systematicTraxType == "SIP") {
-          if (combinedSystematic.systematicTraxFor == "Registration" || combinedSystematic.systematicTraxFor == "Cancellation") {
-            templateContent = fs.readFileSync(
-              "template/sys_sip_registration.html",
-              "utf-8"
-            );
-          }
-          else {
-            templateContent = fs.readFileSync(
-              "template/sys_sip_pause.html",
-              "utf-8"
-            );
-          }
-        }
-        else if (combinedSystematic.systematicTraxType.endsWith('STP')) {
-          templateContent = fs.readFileSync(
-            "template/sys_stp.html",
-            "utf-8"
+
+        // store systematic data in database
+        const ressys = await collection.insertOne(combinedSystematic); // Corrected variable name
+        if (ressys.acknowledged) {
+          console.log("Data stored successfully in systematic");
+          results.push({
+            message: "Data stored successfully in systematic", // Corrected message
+            formsub: i,
+          });
+
+          // add mongo's id field to systematic data
+          combinedSystematic._id = ressys.insertedId.toString();
+
+          // send data to zoho sheet
+          sendToZohoSheet(
+            combinedSystematic,
+            `Systematic form ${i + 1} sent to zoho sheet`
           );
-        }
-        else if (combinedSystematic.systematicTraxType.endsWith('SWP')) {
-          templateContent = fs.readFileSync(
-            "template/sys_swp.html",
-            "utf-8"
-          );
-        }
-
-        // Replace title of the page
-        let filledTemplate = templateContent.replace(
-          "{{pageTitle}}",
-          "Systematic Form"
-        );
-
-        // Replace placeholders with actual data
-        for (const key in combinedSystematic) {
-          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-          filledTemplate = filledTemplate.replace(
-            regex,
-            combinedSystematic[key]
-          );
-        }
-
-        // Set HTML content of the page
-        await page.setContent(filledTemplate);
-
-        // Generate PDF and store it in the buffer
-        const pdf = await page.pdf({ format: "A4", printBackground: true });
-        pdfBuffer.push(pdf);
-
-        // Close the new page to free up resources
-        // await newpage.close();
-
-        if (method === "Submit") {
-          const ressys = await collection.insertOne(combinedSystematic); // Corrected variable name
-          if (ressys.acknowledged) {
-            console.log("Data stored successfully in systematic");
-            results.push({
-              message: "Data stored successfully in systematic", // Corrected message
-              formsub: i,
-            });
-          }
         }
       }
     }
@@ -319,114 +278,77 @@ app.post("/api/data", async (req, res) => {
     if (formData.purchRedempData) {
       const collection = database.collection("predemption");
       for (let i = 0; i < formData.purchRedempData.length; i++) {
+        // combine common data with purchase/redemption
         const combinedRedemption = Object.assign(
           {},
           formData.commonData,
           formData.purchRedempData[i]
         );
-        // Read the HTML template file
-        let templateContent = fs.readFileSync(
-          "template/purch_redemp.html",
-          "utf-8"
-        );
-        // Replace title of the page
-        let filledTemplate = templateContent.replace(
-          "{{pageTitle}}",
-          "Purchase/Redemption Form"
-        );
 
-        // Replace placeholders with actual data
-        for (const key in combinedRedemption) {
-          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-          filledTemplate = filledTemplate.replace(
-            regex,
-            combinedRedemption[key]
+        // store data in database
+        const resp = await collection.insertOne(combinedRedemption);
+        if (resp.acknowledged) {
+          console.log("Data stored successfully in predemption");
+          results.push({
+            message: "Data stored successfully in predemption",
+            formsub: i,
+          });
+
+          // add mongo's id field to purchase/redemption data
+          combinedRedemption._id = resp.insertedId.toString();
+
+          // send data to zoho sheet
+          sendToZohoSheet(
+            combinedRedemption,
+            `Purchase/Redemption form ${i + 1} sent to zoho sheet`
           );
-        }
-
-        // Set HTML content of the page
-        await page.setContent(filledTemplate);
-
-        // Generate PDF and store it in the buffer
-        const pdf = await page.pdf({ format: "A4", printBackground: true });
-        pdfBuffer.push(pdf);
-        if (method === "Submit") {
-          const resp = await collection.insertOne(combinedRedemption);
-          if (resp.acknowledged) {
-            results.push({
-              message: "Data stored successfully in predemption",
-              formsub: i,
-            });
-          }
         }
       }
     }
+
     if (formData.switchData) {
       const collection = database.collection("Switch");
       for (let i = 0; i < formData.switchData.length; i++) {
+        // combine common data and switch data
         const combinedSwitch = Object.assign(
           {},
           formData.commonData,
           formData.switchData[i]
         );
-        let templateContent = fs.readFileSync(
-          "template/switch.html",
-          "utf-8"
-        );
-        // Replace title of the page
-        let filledTemplate = templateContent.replace(
-          "{{pageTitle}}",
-          "Switch Form"
-        );
 
-        // Replace placeholders with actual data
-        for (const key in combinedSwitch) {
-          const regex = new RegExp(`{{${key}}}`, "g"); // Corrected regex pattern
-          filledTemplate = filledTemplate.replace(
-            regex,
-            combinedSwitch[key]
+        // store switch data to database
+        const resswit = await collection.insertOne(combinedSwitch);
+        if (resswit.acknowledged) {
+          console.log("Data stored successfully in Switch");
+          results.push({
+            message: "Data stored successfully in Switch",
+            formsub: i,
+          });
+
+          // add mongo's id field to purchase/redemption data
+          combinedSwitch._id = resswit.insertedId.toString();
+
+          // send data to zoho sheet
+          sendToZohoSheet(
+            combinedSwitch,
+            `Switch form ${i + 1} sent to zoho sheet`
           );
         }
-
-        // Set HTML content of the page
-        await page.setContent(filledTemplate);
-
-        // Generate PDF and store it in the buffer
-        const pdf = await page.pdf({ format: "A4", printBackground: true });
-        pdfBuffer.push(pdf);
-        if ((method === "Submit")) {
-          const resswit = await collection.insertOne(combinedSwitch);
-          if (resswit.acknowledged) {
-            results.push({
-              message: "Data stored successfully in Switch",
-              formsub: i,
-            });
-          }
-        }
       }
     }
-    // Concatenate all PDF buffers
-    const finalPdfBuffer = await mergePdfs(pdfBuffer);
 
-    if (method === "Preview") {
-      // Send the concatenated PDF buffer as the response
-      res.end(finalPdfBuffer);
-      await browser.close();
-    }
-    else {
-      if (results.length > 0) {
-        res.status(200).json(results);
-      } else {
-        res
-          .status(400)
-          .json({ message: "No valid data provided for insertion" });
-      }
+    if (results.length > 0) {
+      res.status(200).json(results);
+    } else {
+      res.status(400).json({ message: "No valid form data provided" });
     }
   } catch (error) {
-    console.error("Error during data insertion", error);
-    res.status(500).send("Error during data insertion");
+    console.error("Error during submission of Form", error);
+    res.status(500).send("Error during submission of Form");
   }
 });
+
+// wildcard route to serve react using express
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });

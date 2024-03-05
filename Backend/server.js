@@ -243,7 +243,16 @@ app.post("/api/data", async (req, res) => {
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: "User not logged in" });
+    }
+    const { name, email } = req.session.user;
+    // Include name and email in commonData
+    formData.commonData = {
+      ...formData.commonData,
+      RMName: name,
+      RMEmail: email,
+    };
     if (formData.systematicData) {
       const collection = database.collection("systematic"); // Corrected collection name
       for (let i = 0; i < formData.systematicData.length; i++) {

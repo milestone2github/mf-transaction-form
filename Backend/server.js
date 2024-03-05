@@ -52,14 +52,13 @@ app.use(dbAccess); // Use the middleware
 
 // Now, in your route handlers, you can access the database connection via `req.db`
 app.get("/auth/zoho", (req, res) => {
-  const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=Aaaserver.profile.Read&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
+  const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=ZohoCRM.users.READ&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
   res.redirect(authUrl);
 });
-
 app.get("/auth/zoho/callback", async (req, res) => {
   const code = req.query.code;
   try {
-    const response = await axios.post(
+    const tokenResponse = await axios.post(
       "https://accounts.zoho.com/oauth/v2/token",
       null,
       {
@@ -73,13 +72,30 @@ app.get("/auth/zoho/callback", async (req, res) => {
       }
     );
 
-    // Assuming response.data contains the user information
-    // Create session here
-    req.session.user = response.data; // Store user data in session
-    // res.status(200).json({ loggedIn: true });
+    const accessToken = tokenResponse.data.access_token;
+    const response = await axios.get(
+      "https://www.zohoapis.com/crm/v3/users?type=CurrentUser",
+      {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${accessToken}`,
+        },
+      }
+    );
+    const userName = response.data.users[0].full_name;
+    const userEmail = response.data.users[0].email;
+    // Store user data in session
+    req.session.user = {
+      name: userName,
+      email: userEmail,
+      accessToken: accessToken, // Storing the access token might be useful for future API calls
+    };
+
     res.redirect("/");
   } catch (error) {
-    console.error("Error during authentication", error);
+    console.error(
+      "Error during authentication or fetching user details",
+      error
+    );
     res.status(500).send("Authentication failed");
   }
 });
@@ -149,15 +165,16 @@ app.get("/api/folios", async (req, res) => {
       return res.status(400).send("Client name parameter is required");
     }
 
-    var query = { "ClientName": new RegExp(keywords, "i") }; // Case-insensitive search for client name
+    var query = { ClientName: new RegExp(keywords, "i") }; // Case-insensitive search for client name
 
     const documents = await collection.find(query).toArray();
 
-    const result = documents.map(doc => {
-      const folio = doc.FolioNo && doc.FolioNo.trim() !== "" ? doc.FolioNo : doc.DPFolioNo;
+    const result = documents.map((doc) => {
+      const folio =
+        doc.FolioNo && doc.FolioNo.trim() !== "" ? doc.FolioNo : doc.DPFolioNo;
       return {
         ...doc,
-        FolioOrDPFolio: folio // Add a new field to indicate the chosen folio number
+        FolioOrDPFolio: folio, // Add a new field to indicate the chosen folio number
       };
     });
 
@@ -180,10 +197,7 @@ app.get("/api/amc", async (req, res) => {
     const result = await collection
       .find(query, { projection: { "FUND NAME": 1, _id: 0 } })
       .toArray();
-    const uniqueFundNames = [
-      ...new Set(result.map((doc) => doc["FUND NAME"])),
-    ].map((name) => ({ "AMC Code": name }));
-    res.status(200).json(uniqueFundNames); // Sending the result back as JSON
+    res.status(200).json(result); // Sending the result back as JSON
   } catch (error) {
     console.error("Error fetching AMC details", error);
     res.status(500).send("Error while fetching AMC details");
@@ -204,7 +218,7 @@ app.post("/api/logout", (req, res) => {
   }
 });
 
-app.get("/api/scheme", async (req, res) => {
+app.get("/api/schemename", async (req, res) => {
   try {
     const collection = req.db.collection("mfschemesDb"); // Replace YourCollectionName with the actual name of your collection
     const { amc, keywords } = req.query; // This line extracts the AMC Code from the query parameters
@@ -215,13 +229,7 @@ app.get("/api/scheme", async (req, res) => {
       return res.status(400).send("scm Code parameter is required");
     }
     var query = { "FUND NAME": amc, scheme_name: new RegExp(keywords, "i") };
-    const documents = await collection.find(query).toArray(); // Fetch documents based on the query
-    // Add a new field "Scheme Code" to each document, copying the value from "scheme_name"
-    const result = documents.map((doc) => ({
-      ...doc,
-      "Scheme Code": doc.scheme_name,
-    }));
-    console.log(result[0]);
+    const result = await collection.find(query).toArray(); // Fetch documents based on the query
     res.status(200).json(result); // This line sends the query result back to the client as JSON
   } catch (error) {
     console.error("Error fetching scheme details", error);
@@ -235,7 +243,16 @@ app.post("/api/data", async (req, res) => {
     const database = req.db2;
     let formData = req.body.formData;
     let results = [];
-
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: "User not logged in" });
+    }
+    const { name, email } = req.session.user;
+    // Include name and email in commonData
+    formData.commonData = {
+      ...formData.commonData,
+      RMName: name,
+      RMEmail: email,
+    };
     if (formData.systematicData) {
       const collection = database.collection("systematic"); // Corrected collection name
       for (let i = 0; i < formData.systematicData.length; i++) {

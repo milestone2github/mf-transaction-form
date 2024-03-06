@@ -1,6 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const express = require("express");
+const jwt = require('jsonwebtoken');
 const path = require("path");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
@@ -15,7 +16,10 @@ app.use(
     secret: process.env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if using https
+    cookie: { 
+      secure: false, // Set to true if using https
+      maxAge: 24 * 3600000
+    }, 
   })
 );
 
@@ -52,7 +56,7 @@ app.use(dbAccess); // Use the middleware
 
 // Now, in your route handlers, you can access the database connection via `req.db`
 app.get("/auth/zoho", (req, res) => {
-  const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=ZohoCRM.users.READ&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
+  const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${process.env.ZOHO_CLIENT_ID}&scope=profile,email&redirect_uri=${process.env.ZOHO_REDIRECT_URI}&access_type=offline`;
   res.redirect(authUrl);
 });
 app.get("/auth/zoho/callback", async (req, res) => {
@@ -72,22 +76,13 @@ app.get("/auth/zoho/callback", async (req, res) => {
       }
     );
 
-    const accessToken = tokenResponse.data.access_token;
-    const response = await axios.get(
-      "https://www.zohoapis.com/crm/v3/users?type=CurrentUser",
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${accessToken}`,
-        },
-      }
-    );
-    const userName = response.data.users[0].full_name;
-    const userEmail = response.data.users[0].email;
+    let id_token = tokenResponse.data.id_token;
+    const decode = jwt.decode(id_token);
+
     // Store user data in session
     req.session.user = {
-      name: userName,
-      email: userEmail,
-      accessToken: accessToken, // Storing the access token might be useful for future API calls
+      name: `${decode.first_name} ${decode.last_name}`,
+      email: decode.email,
     };
 
     res.redirect("/");
@@ -109,25 +104,6 @@ app.get("/api/user/checkLoggedIn", (req, res) => {
     res.status(200).json({ loggedIn: false });
   }
 });
-// Assuming you have already set up the MongoDB connection and middleware as described previously
-// endpoint to add investor data to mongodb
-// app.post("/api/investors", async (req, res) => {
-//   try {
-//     const collection = req.db.collection("MintDb");
-//     const data = req.body;
-//     console.log(typeof data);
-//     // const result = await collection.deleteMany({'PAN' : {$exists: false}});
-//     const result = await collection.insertMany(data)
-//     if (result) {
-//       res.status(200).json(result);
-//     } else {
-//       res.status(404).send("No documents inserted");
-//     }
-//   } catch (error) {
-//     console.error("Error during inserting investor data", error);
-//     res.status(500).send("Error during inserting investor data");
-//   }
-// });
 
 app.get("/api/investors", async (req, res) => {
   try {
@@ -250,8 +226,8 @@ app.post("/api/data", async (req, res) => {
     // Include name and email in commonData
     formData.commonData = {
       ...formData.commonData,
-      RMName: name,
-      RMEmail: email,
+      registrantName: name,
+      registrantEmail: email,
     };
     if (formData.systematicData) {
       const collection = database.collection("systematic"); // Corrected collection name

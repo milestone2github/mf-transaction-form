@@ -108,12 +108,12 @@ app.get("/api/user/checkLoggedIn", (req, res) => {
 app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
-    const { name } = req.query;
-    const { pan } = req.query;
-    const { fh } = req.query;
+    const name = req.query.name;
+    const pan = req.query.pan;
+    const fh = req.query.fh;
 
     if (!name && !pan && !fh) {
-      return res.status(400).send("name, pan or fh parameter is required");
+      return res.status(400).send("name or pan or fh parameter is required");
     }
     var query;
     if (name) {

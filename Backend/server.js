@@ -199,10 +199,10 @@ app.get("/api/schemename", async (req, res) => {
     const collection = req.db.collection("mfschemesDb"); // Replace YourCollectionName with the actual name of your collection
     const { amc, keywords } = req.query; // This line extracts the AMC Code from the query parameters
     if (!amc) {
-      return res.status(400).send("AMC Code parameter is required");
+      return res.status(400).send("AMC Name is required");
     }
     if (!keywords) {
-      return res.status(400).send("scm Code parameter is required");
+      return res.status(400).send("keywords are required");
     }
     var query = { "FUND NAME": amc, scheme_name: new RegExp(keywords, "i") };
     const result = await collection.find(query).toArray(); // Fetch documents based on the query

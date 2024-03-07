@@ -192,17 +192,40 @@ app.get("/api/amc", async (req, res) => {
     if (!keywords) {
       return res.status(400).send("Keywords are required to get AMC names");
     }
-    var query = { "FUND NAME": new RegExp(keywords, "i") }; // Constructing a case-insensitive search query
+
+    // Constructing a case-insensitive search query for aggregation
+    var matchStage = {
+      $match: {
+        "FUND NAME": new RegExp(keywords, "i"),
+      },
+    };
+
+    // Grouping results to ensure uniqueness and excluding _id from the output
+    var groupStage = {
+      $group: {
+        _id: "$FUND NAME", // Group by "FUND NAME" to get unique names
+      },
+    };
+
+    // Projecting the result to get the desired output format
+    var projectStage = {
+      $project: {
+        "FUND NAME": "$_id",
+        _id: 0,
+      },
+    };
 
     const result = await collection
-      .find(query, { projection: { "FUND NAME": 1, _id: 0 } })
+      .aggregate([matchStage, groupStage, projectStage])
       .toArray();
+
     res.status(200).json(result); // Sending the result back as JSON
   } catch (error) {
     console.error("Error fetching AMC details", error);
     res.status(500).send("Error while fetching AMC details");
   }
 });
+
 app.post("/api/logout", (req, res) => {
   if (req.session) {
     req.session.destroy((err) => {

@@ -4,12 +4,11 @@ const commonDataSlice = createSlice({
     name: 'commonData',
     initialState: {
         value: {
-            email: '',
             transactionPreference: 'ASAP',
-            registrant: '',
             panNumber: '',
             investorName: '',
-            familyHead: ''
+            familyHead: '',
+            iWellCode: ''
         }
     },
     reducers: {
@@ -20,12 +19,11 @@ const commonDataSlice = createSlice({
         },
         resetCommonData: (state) => {
             state.value = {
-                email: '',
                 transactionPreference: 'ASAP',
-                registrant: '',
                 panNumber: '',
                 investorName: '',
-                familyHead: ''
+                familyHead: '',
+                iWellCode: ''
             }
         }
     }

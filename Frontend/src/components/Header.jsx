@@ -31,7 +31,7 @@ function Header({ handleSubmit, submitBtn }) {
     debounce((nextValue, name) => {
       dispatch(fetchInvestorData({ [name]: nextValue }))
         .then((action) => {
-          console.log("Dispatched fetchInvestorData:", action);
+          console.log("Dispatched fetchInvestorData");
         })
         .catch((error) => {
           console.error("Error while fetching investor data:", error);
@@ -42,8 +42,8 @@ function Header({ handleSubmit, submitBtn }) {
 
   const handleNameChange = (option) => {
     dispatch(handleChange({ name: 'investorName', value: option.name }))
-    dispatch(handleChange({ name: 'panNumber', value: option.pan }))
-    dispatch(handleChange({ name: 'familyHead', value: option.familyHead }))
+    dispatch(handleChange({ name: 'panNumber', value: option.pan || '' }))
+    dispatch(handleChange({ name: 'familyHead', value: option.familyHead || ''}))
   }
 
   // method to handle change in inputs 
@@ -77,7 +77,7 @@ const handleLogout = async () => {
     if (commonData.panNumber.length) {
       dispatch(fetchFolioOptions(commonData.panNumber))
         .then((action) => {
-          console.log("Dispatched fetchFolioOptions:", action);
+          console.log("Dispatched fetchFolioOptions");
         })
         .catch((error) => {
           console.error("Error while fetching folios:", error);

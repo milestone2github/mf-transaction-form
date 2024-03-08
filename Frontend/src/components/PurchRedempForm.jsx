@@ -36,7 +36,7 @@ function PurchRedempForm({ handleSubmit }) {
     debounce((keywords) => {
       dispatch(fetchAmcNameOptions(keywords))
         .then((action) => {
-          console.log("Dispatched fetch Amc names:", action);
+          console.log("Dispatched fetch Amc names");
         })
         .catch((error) => {
           console.error("Error while fetching Amc names:", error);
@@ -48,9 +48,9 @@ function PurchRedempForm({ handleSubmit }) {
    // Debounced fetch scheme names function
    const debouncedFetchSchemeNames = useCallback(
     debounce((amc, keywords) => {
-      dispatch(fetchSchemeNameOptions(amc, keywords))
+      dispatch(fetchSchemeNameOptions({amc, keywords}))
         .then((action) => {
-          console.log("Dispatched fetch scheme names:", action);
+          console.log("Dispatched fetch scheme names");
         })
         .catch((error) => {
           console.error("Error while fetching Scheme names:", error);

@@ -75,10 +75,10 @@ export const fetchFolioOptions = createAsyncThunk(
   }
 );
 
-// Async thunk for fetching Folio Options
+// Async thunk for fetching scheme name Options
 export const fetchSchemeNameOptions = createAsyncThunk(
   'optionLists/fetchSchemeNameOptions',
-  async (amc, keywords) => {
+  async ({amc, keywords}) => {
     if(!keywords.length)
       return [];
 

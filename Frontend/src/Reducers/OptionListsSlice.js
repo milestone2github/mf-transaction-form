@@ -4,25 +4,15 @@ import { fetchAmcNameOptions, fetchFolioOptions, fetchInvestorData, fetchSchemeN
 const optionListsSlice = createSlice({
   name: 'optionLists',
   initialState: {
-    panOptions: [
-      'Charu Negi',
-      'Ishu Mavar',
-      'Manjeet Kumar',
-      'Nidhi Sharma',
-      'Pramod Bhutani',
-      'Sagar Maini',
-      'Ved Prakash',
-      'Vilakshan Bhutani',
-      'Yatin Munjal',
-    ], //test
+    panOptions: [], //test
     investorNameOptions: [],
     transactionPrefOptions: [
       'ASAP', 'Date Given in Remarks', 'Most Urgent', 'Next Working Day'
     ],
     sysTransactionForOptions: ['Registration', 'Cancellation'],
     sysTransactionForOptionsWithPause: ['Registration', 'Pause', 'Cancellation'],
-    amcNameOptions: ['axis', 'pnb'],//test
-    schemeNameOptions: ['axis-scheme', 'pnb-scheme'],//test
+    amcNameOptions: [],//test
+    schemeNameOptions: [],//test
     schemeOptionOptions: ['Growth', 'IDCW / Dividend'],
     sipPauseMonthsOptions: ['Not Applicable', '2 Months', '3 Months', 'Maximum Months'],
     sip_stp_swpDateOptions: [
@@ -59,7 +49,7 @@ const optionListsSlice = createSlice({
     });
 
     builder.addCase(fetchAmcNameOptions.fulfilled, (state, action) => {
-      let options = action.payload.map(item => (item["AMC Code"]));
+      let options = action.payload.map(item => (item["FUND NAME"]));
       state.amcNameOptions = options;
     });
 
@@ -70,7 +60,8 @@ const optionListsSlice = createSlice({
     });
 
     builder.addCase(fetchSchemeNameOptions.fulfilled, (state, action) => {
-      state.schemeNameOptions = action.payload;
+      let options = action.payload.map(item => (item['scheme_name']))
+      state.schemeNameOptions = options;
     });
   }
 })

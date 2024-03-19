@@ -12,6 +12,7 @@ import { handleAdd, handleChange, handleRemove, handleSelect } from '../Reducers
 import CustomInputList from './common/CustomInputList';
 import { fetchAmcNameOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction';
 import debounce from '../utils/debounce';
+import TextInput from './common/TextInput';
 
 function PurchRedempForm({ handleSubmit }) {
   // get purchRedempData state from store
@@ -155,17 +156,17 @@ function PurchRedempForm({ handleSubmit }) {
             />
           </div>
           <div className='grow shrink basis-72'>
-            <InputList
+            <TextInput
               id='purch_redempFolio'
               index={idx} 
               label='Folio'
-              listName='folios'
               required={true}
-              listOptions={
-                purchRedempItem.purch_RedempTraxType === 'Purchase' ?
-                folioOptionsWithNew :
-                folioOptions
-              }
+              // listName='folios'
+              // listOptions={
+              //   purchRedempItem.purch_RedempTraxType === 'Purchase' ?
+              //   folioOptionsWithNew :
+              //   folioOptions
+              // }
               value={purchRedempItem.purch_redempFolio}
               onChange={handleInputChange}
             />

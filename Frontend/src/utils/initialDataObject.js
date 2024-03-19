@@ -1,3 +1,4 @@
+import getCurrentDate from "./getCurrentDate"
 
 export const hollowSystematicObj = {
   systematicTraxType: 'SIP',
@@ -10,7 +11,7 @@ export const hollowSystematicObj = {
   sip_swp_stpAmount: 1,
   tenureOfSip_swp_stp: 9999,
   sipPauseMonths: '2 Months',
-  sip_stp_swpDate: '',
+  sip_stp_swpDate: getCurrentDate(),
   firstTransactionAmount: 1,
   systematicRemarksByEntryPerson: '',
 }

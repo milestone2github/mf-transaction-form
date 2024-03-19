@@ -101,16 +101,6 @@ const handleLogout = async () => {
       </header>
       <form onSubmit={handleSubmit} className='flex flex-wrap gap-6 gap-y-8 mt-5'>
         {/* <legend></legend> */}
-        {/* <div className='grow shrink w-80'>
-          <EmailInput
-            id='email'
-            label='Email'
-            required={true}
-            value={commonData.email}
-            onChange={handleInputChange}
-            secondItem='@niveshonline.com'
-          />
-        </div> */}
 
         <div className='grow shrink basis-full'>
           <RadioInput
@@ -147,7 +137,7 @@ const handleLogout = async () => {
             label='PAN Number'
             listName='pan-numbers'
             placeHolder='XXXXXXXXXX'
-            required={true}
+            required={false}
             value={commonData.panNumber}
             fetchData={debouncedFetchInvestorData}
             updateSelectedOption={handleNameChange}

@@ -14,6 +14,8 @@ import {handleChange, handleSelect, handleAdd, handleRemove} from '../Reducers/S
 import { fetchAmcNameOptions, fetchFolioOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction'
 import CustomInputList from './common/CustomInputList'
 import debounce from '../utils/debounce'
+import DateInput from './common/DateInput'
+import getCurrentDate from '../utils/getCurrentDate'
 
 function SystematicForm({ handleSubmit }) {
   // get systematicData state from store
@@ -193,16 +195,16 @@ function SystematicForm({ handleSubmit }) {
               />
             </div>
             <div className='grow shrink basis-72'>
-              <InputList
+              <TextInput
                 id='systematicFolio'
                 index={idx}
                 label='Folio'
-                listOptions={
-                  systematicItem.systematicTraxFor === 'Registration' ?
-                  folioOptionsWithNew :
-                  folioOptions
-                }
-                listName='folios'
+                // listOptions={
+                //   systematicItem.systematicTraxFor === 'Registration' ?
+                //   folioOptionsWithNew :
+                //   folioOptions
+                // }
+                // listName='folios'
                 required={true}
                 value={systematicItem.systematicFolio}
                 onChange={handleInputChange}
@@ -252,7 +254,7 @@ function SystematicForm({ handleSubmit }) {
               />
             </div>}
             <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
-              <PreFilledSelect
+              <DateInput
                 id='sip_stp_swpDate'
                 index={idx} 
                 label={`${
@@ -261,9 +263,10 @@ function SystematicForm({ handleSubmit }) {
                   ['SWP', 'Capital Appreciation SWP'].includes(systematicItem.systematicTraxType) ? 
                   'SWP': 'STP'
                 } Date`}
-                options={sip_stp_swpDateOptions}
-                selectedOption={systematicItem.sip_stp_swpDate}
-                onSelect={handleSelectChange}
+                required={true}
+                minDate={getCurrentDate()}
+                value={systematicItem.sip_stp_swpDate}
+                onChange={handleInputChange}
               />
             </div>
             <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>

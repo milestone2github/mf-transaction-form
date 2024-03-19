@@ -12,6 +12,7 @@ import { handleAdd, handleChange, handleRemove, handleSelect } from '../Reducers
 import CustomInputList from './common/CustomInputList';
 import { fetchAmcNameOptions, fetchSchemeNameOptions } from '../Actions/OptionListsAction';
 import debounce from '../utils/debounce';
+import TextInput from './common/TextInput';
 
 function SwitchForm({ handleSubmit }) {
   // get switchData state from store 
@@ -161,13 +162,13 @@ function SwitchForm({ handleSubmit }) {
             />
           </div>
           <div className='grow shrink basis-72'>
-            <InputList
+            <TextInput
               id='switchFolio'
               index={idx} 
               label='Folio'
               required={true}
-              listName='folios'
-              listOptions={folioOptions}
+              // listName='folios'
+              // listOptions={folioOptions}
               value={switchItem.switchFolio}
               onChange={handleInputChange}
             />

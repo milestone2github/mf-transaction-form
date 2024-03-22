@@ -14,6 +14,8 @@ import { resetSystematicData } from './Reducers/SystematicDataSlice';
 import { resetPurchRedempData } from './Reducers/PurchRedempDataSlice';
 import { resetSwitchData } from './Reducers/SwitchDataSlice';
 import { resetCommonData } from './Reducers/CommonDataSlice';
+import Modal from './components/common/Modal';
+import { IoMdCheckmarkCircle } from 'react-icons/io';
 
 function App() {
   const [alert, setAlert] = useState({
@@ -24,14 +26,15 @@ function App() {
   })
 
   const [completeTransactionData, setCompleteTransactionData] = useState({});
-  const [isLoadingSubmission, setIsLoadingSubmission] = useState(false)
+  const [isLoadingSubmission, setIsLoadingSubmission] = useState(false);
+  // const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(true);
 
   // get all data states from store 
   const commonData = useSelector(state => state.commonData.value);
   const systematicData = useSelector(state => state.systematicData.value);
   const purchRedempData = useSelector(state => state.purchRedempData.value);
   const switchData = useSelector(state => state.switchData.value);
-
+  
   const dispatch = useDispatch();
 
   const commonFormSubmitBtn = useRef(null);
@@ -54,6 +57,13 @@ function App() {
   const saveSystematicform = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // first remove systematicData from complete data 
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, systematicData: [] })
+    )
+
+    // default alert state 
     let alert = {
       isOn: true,
       type: 'error',
@@ -72,6 +82,16 @@ function App() {
         updateAlert(alert);
         return;
       }
+      else if (!sysItem.sipPauseMonths) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>SIP Pause Months</strong></span>
+        updateAlert(alert);
+        return;
+      }
+      else if (!sysItem.systematicPaymentMode) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>First Installment Payment Mode</strong></span>
+        updateAlert(alert);
+        return;
+      }
     }
 
     setCompleteTransactionData(
@@ -87,6 +107,13 @@ function App() {
   const savePurchRedempform = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // first remove systematicData from complete data 
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, purchRedempData: [] })
+    )
+
+    // default alert state 
     let alert = {
       isOn: true,
       type: 'error',
@@ -97,6 +124,11 @@ function App() {
     for (const purchRedempItem of purchRedempData) {
       if (!purchRedempItem.purch_redempMfAmcName) {
         alert.message = <span>Select one of the option in <strong className='text-xs'>MF (AMC) Name</strong></span>
+        updateAlert(alert);
+        return;
+      }
+      else if (!purchRedempItem.purch_redempPaymentMode) {
+        alert.message = <span>Select one of the option in <strong className='text-xs'>Payment Mode</strong></span>
         updateAlert(alert);
         return;
       }
@@ -115,6 +147,13 @@ function App() {
   const saveSwitchform = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // first remove systematicData from complete data
+    setCompleteTransactionData(
+      prevData => ({ ...prevData, switchData: [] })
+    )
+
+    // default alert state
     let alert = {
       isOn: true,
       type: 'error',
@@ -180,7 +219,7 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert.message = data?.message? <span>{data.message}</span> : <span>Server error! Try again later</span>;
+        alert.message = data?.message ? <span>{data.message}</span> : <span>Server error! Try again later</span>;
         updateAlert(alert)
         return;
       }
@@ -236,6 +275,30 @@ function App() {
                 handleSubmit={saveSwitchform}
               />
         }
+
+        {/* <Modal
+          isOpen={isConfirmModalOpen}
+          onClose={() => setIsConfirmModalOpen(false)}
+          title='Saved Forms'
+          body={
+            <div className='flex flex-col gap-2'>
+              <div className='flex justify-between border rounded-md p-2 gap-16'>
+                <p className='text-lg'>SYSTEMATIC</p>
+                <span className={`text-3xl ${completeTransactionData.systematicData ? 'text-green-700' : 'text-slate-300'}`}><IoMdCheckmarkCircle /></span>
+              </div>
+              <div className='flex justify-between border rounded-md p-2 gap-16'>
+                <p className='text-lg'>PURCHASE / REDEMPTION</p>
+                <span className={`text-3xl ${completeTransactionData.purchRedempData ? 'text-green-700' : 'text-slate-300'}`}><IoMdCheckmarkCircle /></span>
+              </div>
+              <div className='flex justify-between border rounded-md p-2 gap-16'>
+                <p className='text-lg'>SWITCH</p>
+                <span className={`text-3xl ${completeTransactionData.switchData ? 'text-green-700' : 'text-slate-300'}`}><IoMdCheckmarkCircle /></span>
+              </div>
+            </div>}
+          primaryAction={() => console.log('submit true')}
+          primaryBtnText='Proceed'
+        /> */}
+
         <div className="flex gap-4">
           <PrimaryButton
             action={triggerSubmitBtn}

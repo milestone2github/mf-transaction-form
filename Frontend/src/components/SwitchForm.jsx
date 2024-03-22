@@ -142,7 +142,7 @@ function SwitchForm({ handleSubmit }) {
               required={true}
               value={switchItem.switchToScheme}
               fetchData={(value) => 
-                debouncedFetchSchemeNames(systematicItem.systematicMfAmcName, value)
+                debouncedFetchSchemeNames(switchItem.switchMfAmcName, value)
               }
               updateSelectedOption={handleInputListChange}
               listOptions={schemeNameOptions}

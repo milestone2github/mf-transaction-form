@@ -7,7 +7,7 @@ const optionListsSlice = createSlice({
     panOptions: [], //test
     investorNameOptions: [],
     transactionPrefOptions: [
-      'ASAP', 'Date Given in Remarks', 'Most Urgent', 'Next Working Day'
+      'ASAP', 'Most Urgent', 'Next Working Day'
     ],
     sysTransactionForOptions: ['Registration', 'Cancellation'],
     sysTransactionForOptionsWithPause: ['Registration', 'Pause', 'Cancellation'],
@@ -34,7 +34,9 @@ const optionListsSlice = createSlice({
     folioOptionsWithNew: ['Create New Folio'],
     purch_redempTraxTypeOptions: ['Purchase', 'Redemption'],
     purch_redempTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Redeem All Units', 'Units Mentioned in Remarks', 'Unlocked Units'],
-    switchTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Switch All Units', 'Units Mentioned in Remarks', 'Unlocked Units']
+    switchTraxUnits_AmountOptions: ['Amount Given in next question', 'Long Term Units', 'Switch All Units', 'Units Mentioned in Remarks', 'Unlocked Units'],
+    sysPaymentModeOptions: ['Netbanking', 'Mandate', 'Cheque', 'NEFT/RTGS', 'Zero Balance'],
+    purchPaymentModeOptions: ['Netbanking', 'Mandate', 'Cheque', 'NEFT/RTGS']
   },
   extraReducers: (builder) => {
     builder.addCase(fetchInvestorData.fulfilled, (state, action) => {
@@ -42,7 +44,8 @@ const optionListsSlice = createSlice({
         return ({
           name: investor['NAME'],
           pan: investor['PAN'],
-          familyHead: investor['FAMILY HEAD']
+          familyHead: investor['FAMILY HEAD'],
+          email: investor['EMAIL']
         })
       })
       state.investorNameOptions = investorOptions;

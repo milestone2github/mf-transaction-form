@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
-import EmailInput from './common/EmailInput'
+import React, { useCallback, useEffect, useState } from 'react'
 import RadioInput from './common/RadioInput'
 import TextInput from './common/TextInput'
 import { useDispatch, useSelector } from 'react-redux'
@@ -10,10 +9,15 @@ import CustomInputList from './common/CustomInputList'
 import logo from '../assets/companyLogo.png';
 import { setLoggedIn } from '../Reducers/UserSlice'
 import { useNavigate } from 'react-router-dom'
+import CustomInputListWithFilter from './common/InputListWithFilter'
+import RadioInputWithDate from './common/RadioInputWithDate'
 
 function Header({ handleSubmit, submitBtn }) {
   // get systematicData state from store
   const commonData = useSelector(state => state.commonData.value);
+
+  // state to store filter value of search investors from all RMs 
+  const [searchAllInvestor, setSearchAllInvestor] = useState(false)
 
   // get optionLists state from store 
   const {
@@ -28,8 +32,8 @@ function Header({ handleSubmit, submitBtn }) {
 
   // Debounced dispatch function
   const debouncedFetchInvestorData = useCallback(
-    debounce((nextValue, name) => {
-      dispatch(fetchInvestorData({ [name]: nextValue }))
+    debounce((nextValue, name, searchAll) => {
+      dispatch(fetchInvestorData({ [name]: nextValue, searchAll}))
         .then((action) => {
           console.log("Dispatched fetchInvestorData");
         })
@@ -49,7 +53,6 @@ function Header({ handleSubmit, submitBtn }) {
   // method to handle change in inputs 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    console.log(event)
     dispatch(handleChange({ name, value }));
   }
 
@@ -103,10 +106,10 @@ const handleLogout = async () => {
         {/* <legend></legend> */}
 
         <div className='grow shrink basis-full'>
-          <RadioInput
+          <RadioInputWithDate
             label='Transaction Preference'
             name='transactionPreference'
-            options={transactionPrefOptions}
+            // options={transactionPrefOptions}
             selectedOption={commonData.transactionPreference}
             onChange={handleInputChange}
           />
@@ -115,7 +118,11 @@ const handleLogout = async () => {
         {/* <fieldset className='flex grow shrink gap-3 mt-3'> */}
         {/* <legend className='text-gray-800 text-sm text-left'>Investor Name</legend> */}
         <div className="w-80 grow shrink basis-72">
-          <CustomInputList
+          <CustomInputListWithFilter
+            filterId='searchAll'
+            filterLabel='Search All'
+            filterValue={searchAllInvestor}
+            onChangeFilter={(value)=> setSearchAllInvestor(value)}
             id='investorName'
             label='Investor name'
             listName='investor-names'
@@ -125,7 +132,7 @@ const handleLogout = async () => {
             updateSelectedOption={handleNameChange}
             listOptions={investorNameOptions}
             renderOption={(option) =>
-              (<><span className='font-medium'>{option.name}</span> / <span className='text-gray-900'>{option.pan}</span> / <span>{option.familyHead}</span></>)
+              (<><span className='font-medium'>{option.name}</span> / <span className='text-gray-900'>{option.pan}</span> / <span>{option.familyHead}</span> / <span>{option.email}</span></>)
             }
           />
         </div>
@@ -143,19 +150,32 @@ const handleLogout = async () => {
             updateSelectedOption={handleNameChange}
             listOptions={investorNameOptions}
             renderOption={(option) =>
-              (<><span className=''>{option.name}</span> / <span className='font-medium'>{option.pan}</span> / <span>{option.familyHead}</span></>)
+              (<><span className=''>{option.name}</span> / <span className='font-medium'>{option.pan}</span> / <span>{option.familyHead}</span> / <span>{option.email}</span></>)
             }
           />
         </div>
         <div className='grow shrink basis-72 w-80'>
-          <TextInput
+        <CustomInputList
+            id='familyHead'
+            label='Family Head'
+            listName='pan-numbers'
+            required={true}
+            value={commonData.familyHead}
+            fetchData={debouncedFetchInvestorData}
+            updateSelectedOption={handleNameChange}
+            listOptions={investorNameOptions}
+            renderOption={(option) =>
+              (<><span>{option.name}</span> / <span>{option.pan}</span> / <span className='font-medium'>{option.familyHead}</span> / <span>{option.email}</span></>)
+            }
+          />
+          {/* <TextInput
             id='familyHead'
             label='Family Head'
             required={true}
             disable={true}
             value={commonData.familyHead}
             onChange={handleInputChange}
-          />
+          /> */}
         </div>
 
         <button ref={submitBtn} type='submit' className='hidden'>Submit</button>

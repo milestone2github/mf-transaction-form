@@ -26,7 +26,8 @@ function PurchRedempForm({ handleSubmit }) {
     schemeNameOptions,
     schemeOptionOptions,
     folioOptions, 
-    folioOptionsWithNew 
+    folioOptionsWithNew,
+    purchPaymentModeOptions 
   } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers
@@ -181,7 +182,7 @@ function PurchRedempForm({ handleSubmit }) {
               onSelect={handleSelectChange}
             />
           </div>
-          <div className=' shrink basis-72'>
+          <div className='grow shrink basis-72 max-w-full md:max-w-[calc(50%-32px)] lg:max-w-[calc(33%-39.6px)]'>
             <NumberInput
               id='purch_redempTransactionAmount'
               index={idx} 
@@ -191,6 +192,18 @@ function PurchRedempForm({ handleSubmit }) {
               onChange={handleInputChange}
             />
           </div>
+          {purchRedempItem.purch_RedempTraxType === 'Purchase' &&
+          <div className='grow shrink basis-72 max-w-full md:max-w-[calc(50%-32px)] lg:max-w-[calc(33%-39.6px)]'>
+            <PreFilledSelect
+              id='purch_redempPaymentMode'
+              index={idx} 
+              label='Payment Mode'
+              options={purchPaymentModeOptions}
+              selectedOption={purchRedempItem.purch_redempPaymentMode}
+              onSelect={handleSelectChange}
+            />
+          </div>
+          }
           {/* <div className="w-full">
             <div className='w-1/2'>
               <TextAreaInput

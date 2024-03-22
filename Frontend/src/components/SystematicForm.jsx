@@ -32,7 +32,8 @@ function SystematicForm({ handleSubmit }) {
     sip_stp_swpDateOptions,
     transactionTypeOptions,
     folioOptions,
-    folioOptionsWithNew
+    folioOptionsWithNew,
+    sysPaymentModeOptions
   } = useSelector(state => state.optionLists);
 
   // use useDispatch hook to use reducers 
@@ -243,7 +244,7 @@ function SystematicForm({ handleSubmit }) {
             </div>
             {systematicItem.systematicTraxFor === 'Pause' && 
             systematicItem.systematicTraxType === 'SIP' &&
-            <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
+            <div className='grow shrink basis-72 max-w-full md:max-w-[calc(50%-32px)] lg:max-w-[calc(33%-39.6px)]'>
               <PreFilledSelect
                 id='sipPauseMonths'
                 index={idx}
@@ -253,7 +254,7 @@ function SystematicForm({ handleSubmit }) {
                 onSelect={handleSelectChange}
               />
             </div>}
-            <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
+            <div className='grow shrink basis-72 max-w-full md:max-w-[calc(50%-32px)] lg:max-w-[calc(33%-39.6px)]'>
               <DateInput
                 id='sip_stp_swpDate'
                 index={idx} 
@@ -269,7 +270,7 @@ function SystematicForm({ handleSubmit }) {
                 onChange={handleInputChange}
               />
             </div>
-            <div className='grow shrink basis-72 max-w-[calc(29.8%)]'>
+            <div className='grow shrink basis-72 max-w-full md:max-w-[calc(50%-32px)] lg:max-w-[calc(33%-39.6px)]'>
               <NumberInput
                 id='firstTransactionAmount'
                 index={idx}
@@ -280,6 +281,18 @@ function SystematicForm({ handleSubmit }) {
                 onChange={handleInputChange}
               />
             </div>
+            {systematicItem.systematicTraxType === 'SIP' &&
+            systematicItem.systematicTraxFor === 'Registration' && 
+            <div className='grow shrink basis-72 max-w-full md:max-w-[calc(50%-32px)] lg:max-w-[calc(33%-39.6px)]'>
+              <PreFilledSelect
+                id='systematicPaymentMode'
+                index={idx}
+                label='First Installment Payment Mode'
+                options={sysPaymentModeOptions}
+                selectedOption={systematicItem.systematicPaymentMode}
+                onSelect={handleSelectChange}
+              />
+            </div>}
             {/* <div className='shrink w-1/2'>
               <TextAreaInput
                 id='systematicRemarksByEntryPerson'

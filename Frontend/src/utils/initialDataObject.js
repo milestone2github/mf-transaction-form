@@ -10,10 +10,11 @@ export const hollowSystematicObj = {
   systematicFolio: '',
   sip_swp_stpAmount: 1,
   tenureOfSip_swp_stp: 9999,
-  sipPauseMonths: '2 Months',
+  sipPauseMonths: '',
   sip_stp_swpDate: getCurrentDate(),
   firstTransactionAmount: 1,
   systematicRemarksByEntryPerson: '',
+  systematicPaymentMode: ''
 }
 
 export const hollowPurchRedempObj = {
@@ -25,6 +26,7 @@ export const hollowPurchRedempObj = {
   purch_redempTransactionUnits_Amount: 'Amount Given in next question',
   purch_redempTransactionAmount: 1,
   purch_redempRemarksByEntryPerson: '',
+  purch_redempPaymentMode: ''
 }
 
 export const hollowSwitchObj = {

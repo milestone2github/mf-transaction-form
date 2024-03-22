@@ -6,7 +6,7 @@ export const fetchInvestorData = createAsyncThunk(
   'optionLists/fetchInvestorData',
   async (query) => {
     let params = '';
-    
+    console.log('searchall: ', query.searchAll);
     if('investorName' in query && query.investorName.length) {
       params = `name=${query.investorName}`
     }
@@ -19,11 +19,11 @@ export const fetchInvestorData = createAsyncThunk(
     else return [];
     
     try {
-      const response = await fetch(`${baseUrl}/investors/?${params}`, {
+      const response = await fetch(`${baseUrl}/investors/?${params}&searchall=${query.searchAll}`, {
         method: 'GET'
       }); 
       const data = await response.json();
-      console.log('investor data:', data)
+      // console.log('investor data:', data)
       if(!response.ok) {
         throw new Error('Unable to fetch investor data')
       }

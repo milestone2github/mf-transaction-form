@@ -112,19 +112,31 @@ app.get("/api/investors", async (req, res) => {
     const name = req.query.name;
     const pan = req.query.pan;
     const fh = req.query.fh;
-
+    const search_result = req.query.searchAll;
+    
     if (!name && !pan && !fh) {
       return res.status(400).send("name or pan or fh parameter is required");
     }
     var query;
+    rm_det=req.session.user.name;
+
+    if (name && search_result) {
+      query = { NAME: new RegExp(name, "i"),"RELATIONSHIP  MANAGER": rm_det};
+    }
+    if (pan && search_result) {
+      query = { PAN: new RegExp(pan, "i"),"RELATIONSHIP  MANAGER": rm_det };
+    }
+    if (fh && search_result) {
+      query = { "FAMILY HEAD": new RegExp(fh, "i"),"RELATIONSHIP  MANAGER": rm_det };
+    }
     if (name) {
-      query = { NAME: new RegExp(name, "i") };
+      query = { NAME: new RegExp(name, "i")};
     }
     if (pan) {
-      query = { PAN: new RegExp(pan, "i") };
+      query = { PAN: new RegExp(pan, "i")};
     }
     if (fh) {
-      query = { "FAMILY HEAD": new RegExp(fh, "i") };
+      query = { "FAMILY HEAD": new RegExp(fh, "i")};
     }
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
@@ -136,31 +148,36 @@ app.get("/api/investors", async (req, res) => {
 
 app.get("/api/folios", async (req, res) => {
   try {
-    const collection = req.db.collection("BSEOrderStatus"); // Ensure this is the correct collection name
-    const { keywords } = req.query; // Assuming 'keywords' is the client name you're searching for
-    if (!keywords) {
-      return res.status(400).send("Client name parameter is required");
+    const iwellCode = req.query.iwell;
+    const schemeNamePrefix = req.query.amcName; // Expecting the first two words of the scheme name
+
+    if (!iwellCode || !schemeNamePrefix) {
+      return res.status(400).send("iwell code and scheme name prefix are required");
     }
 
-    var query = { ClientName: new RegExp(keywords, "i") }; // Case-insensitive search for client name
+    const collection = req.db.collection("folioMasterDb");
+    
+    // Create a regular expression to match the first two words of the scheme name
+    const schemeNameRegex = new RegExp(`^${schemeNamePrefix.split(' ').slice(0, 2).join(' ')}`, 'i');
 
-    const documents = await collection.find(query).toArray();
+    var query = {
+      "IWELL CODE": parseInt(iwellCode),
+      "SCHEME NAME": schemeNameRegex
+    };
 
-    const result = documents.map((doc) => {
-      const folio =
-        doc.FolioNo && doc.FolioNo.trim() !== "" ? doc.FolioNo : doc.DPFolioNo;
-      return {
-        ...doc,
-        FolioOrDPFolio: folio, // Add a new field to indicate the chosen folio number
-      };
-    });
-
-    res.status(200).json(result);
+    const result = await collection.findOne(query, { projection: { "FOLIO NO": 1 } });
+    
+    if (result) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).send("Folio not found");
+    }
   } catch (error) {
     console.error("Error fetching folios", error);
     res.status(500).send("Error while fetching folios");
   }
 });
+
 
 app.get("/api/amc", async (req, res) => {
   try {

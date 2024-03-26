@@ -118,25 +118,25 @@ app.get("/api/investors", async (req, res) => {
       return res.status(400).send("name or pan or fh parameter is required");
     }
     var query;
-    rm_det=req.session.user.name;
+    var rm_det=req.session.user.name;
 
     if (name && search_result) {
-      query = { NAME: new RegExp(name, "i"),"RELATIONSHIP  MANAGER": rm_det};
-    }
-    if (pan && search_result) {
-      query = { PAN: new RegExp(pan, "i"),"RELATIONSHIP  MANAGER": rm_det };
-    }
-    if (fh && search_result) {
-      query = { "FAMILY HEAD": new RegExp(fh, "i"),"RELATIONSHIP  MANAGER": rm_det };
-    }
-    if (name) {
       query = { NAME: new RegExp(name, "i")};
     }
-    if (pan) {
+    if (pan && search_result) {
       query = { PAN: new RegExp(pan, "i")};
     }
-    if (fh) {
+    if (fh && search_result) {
       query = { "FAMILY HEAD": new RegExp(fh, "i")};
+    }
+    if (name) {
+      query = { NAME: new RegExp(name, "i"),"RELATIONSHIP  MANAGER": rm_det};
+    }
+    if (pan) {
+      query = { PAN: new RegExp(pan, "i"),"RELATIONSHIP  MANAGER": rm_det };
+    }
+    if (fh) {
+      query = { "FAMILY HEAD": new RegExp(fh, "i"),"RELATIONSHIP  MANAGER": rm_det };
     }
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
@@ -157,7 +157,6 @@ app.get("/api/folios", async (req, res) => {
 
     const collection = req.db.collection("folioMasterDb");
     
-    // Create a regular expression to match the first two words of the scheme name
     const schemeNameRegex = new RegExp(`^${schemeNamePrefix.split(' ').slice(0, 2).join(' ')}`, 'i');
 
     var query = {

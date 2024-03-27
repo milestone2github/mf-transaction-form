@@ -1,7 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const express = require("express");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const path = require("path");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
@@ -16,10 +16,10 @@ app.use(
     secret: process.env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { 
+    cookie: {
       secure: false, // Set to true if using https
-      maxAge: 24 * 3600000
-    }, 
+      maxAge: 24 * 3600000,
+    },
   })
 );
 
@@ -112,31 +112,35 @@ app.get("/api/investors", async (req, res) => {
     const name = req.query.name;
     const pan = req.query.pan;
     const fh = req.query.fh;
-    const search_result = req.query.searchAll;
-    
+    var search_result = parseInt(req.query.searchAll);
+    // search_result = 1;
     if (!name && !pan && !fh) {
       return res.status(400).send("name or pan or fh parameter is required");
     }
     var query;
-    var rm_det=req.session.user.name;
-
+    // console.log(req.session.user.name);
+    var rm_det = req.session.user.name;
+    // rm_det="VILAKSHAN P BHUTANI";
     if (name && search_result) {
-      query = { NAME: new RegExp(name, "i")};
+      query = { NAME: new RegExp(name, "i") };
+    }
+    else if (name) {
+      query = { NAME: new RegExp(name, "i"), "RELATIONSHIP  MANAGER": rm_det };
     }
     if (pan && search_result) {
-      query = { PAN: new RegExp(pan, "i")};
+      query = { PAN: new RegExp(pan, "i") };
+    }
+    else if (pan) {
+      query = { PAN: new RegExp(pan, "i"), "RELATIONSHIP  MANAGER": rm_det };
     }
     if (fh && search_result) {
-      query = { "FAMILY HEAD": new RegExp(fh, "i")};
-    }
-    if (name) {
-      query = { NAME: new RegExp(name, "i"),"RELATIONSHIP  MANAGER": rm_det};
-    }
-    if (pan) {
-      query = { PAN: new RegExp(pan, "i"),"RELATIONSHIP  MANAGER": rm_det };
+      query = { "FAMILY HEAD": new RegExp(fh, "i") };
     }
     if (fh) {
-      query = { "FAMILY HEAD": new RegExp(fh, "i"),"RELATIONSHIP  MANAGER": rm_det };
+      query = {
+        "FAMILY HEAD": new RegExp(fh, "i"),
+        "RELATIONSHIP  MANAGER": rm_det,
+      };
     }
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
@@ -149,23 +153,36 @@ app.get("/api/investors", async (req, res) => {
 app.get("/api/folios", async (req, res) => {
   try {
     const iwellCode = req.query.iwell;
-    const schemeNamePrefix = req.query.amcName; // Expecting the first two words of the scheme name
-
+    var schemeNamePrefix = req.query.amcName;
+    schemeNamePrefix=schemeNamePrefix.split(' ')[0];
     if (!iwellCode || !schemeNamePrefix) {
-      return res.status(400).send("iwell code and scheme name prefix are required");
+      return res
+        .status(400)
+        .send("iwell code and scheme name prefix are required");
     }
-
     const collection = req.db.collection("folioMasterDb");
-    
-    const schemeNameRegex = new RegExp(`^${schemeNamePrefix.split(' ').slice(0, 2).join(' ')}`, 'i');
-
     var query = {
       "IWELL CODE": parseInt(iwellCode),
-      "SCHEME NAME": schemeNameRegex
+      "SCHEME NAME": new RegExp(`^${schemeNamePrefix}`, "i")
     };
-
-    const result = await collection.findOne(query, { projection: { "FOLIO NO": 1 } });
-    
+    const projection = {
+      "_id": 0,
+      "IWELL CODE": 1,
+      "SCHEME NAME": 1,
+      "FOLIO NO": 1,
+      "UNITS": 1,
+      "HOLDING": 1,
+      "AUM": 1,
+      "BANK NAME": 1,
+      "ACCOUNT NO": 1
+    };
+    var result = await collection.find(query,{projection}).toArray();
+    if(!result.length){
+      query = {
+        "IWELL CODE": parseInt(iwellCode)
+      };
+      result=await collection.find(query,{projection}).toArray();
+    }
     if (result) {
       res.status(200).json(result);
     } else {
@@ -176,7 +193,6 @@ app.get("/api/folios", async (req, res) => {
     res.status(500).send("Error while fetching folios");
   }
 });
-
 
 app.get("/api/amc", async (req, res) => {
   try {

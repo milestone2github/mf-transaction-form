@@ -4,7 +4,6 @@ import { fetchAmcNameOptions, fetchFolioOptions, fetchInvestorData, fetchSchemeN
 const optionListsSlice = createSlice({
   name: 'optionLists',
   initialState: {
-    panOptions: [], //test
     investorNameOptions: [],
     transactionPrefOptions: [
       'ASAP', 'Most Urgent', 'Next Working Day'
@@ -45,7 +44,8 @@ const optionListsSlice = createSlice({
           name: investor['NAME'],
           pan: investor['PAN'],
           familyHead: investor['FAMILY HEAD'],
-          email: investor['EMAIL']
+          email: investor['EMAIL'],
+          iWellCode: investor['IWELL CODE']
         })
       })
       state.investorNameOptions = investorOptions;
@@ -57,7 +57,13 @@ const optionListsSlice = createSlice({
     });
 
     builder.addCase(fetchFolioOptions.fulfilled, (state, action) => {
-      let folioOptions = action.payload.map(folio => (folio.folio.folioNumber));
+      let folioOptions = action.payload.map(folio => ({
+        folio: folio["FOLIO NO"],
+        units: folio["UNITS"],
+        holding: folio["HOLDING"],
+        amount: folio["AUM"],
+        bankDetail: folio["BANK NAME"].toUpperCase().split(' ').map(word => word[0]).join('') + ' ' + folio["ACCOUNT NO"].toString().slice(-4), 
+      }));  
       state.folioOptionsWithNew = ['Create New Folio', ...folioOptions];
       state.folioOptions = folioOptions;
     });

@@ -23,7 +23,7 @@ export const fetchInvestorData = createAsyncThunk(
         method: 'GET'
       }); 
       const data = await response.json();
-      // console.log('investor data:', data)
+
       if(!response.ok) {
         throw new Error('Unable to fetch investor data')
       }
@@ -59,9 +59,12 @@ export const fetchAmcNameOptions = createAsyncThunk(
 // Async thunk for fetching Folio Options
 export const fetchFolioOptions = createAsyncThunk(
   'optionLists/fetchFolioOptions',
-  async (pan) => {
+  async ({iWell, amcName}) => {
+    if(!iWell || !amcName)
+      return [];
+
     try {
-      const response = await fetch(`${baseUrl}/folios?pan=${pan}`, {
+      const response = await fetch(`${baseUrl}/folios?iwell=${iWell}&amcName=${amcName}`, {
         method: 'GET'
       }); 
       const data = await response.json();

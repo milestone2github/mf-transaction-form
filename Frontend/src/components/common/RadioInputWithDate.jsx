@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import getCurrentDate from '../../utils/getCurrentDate';
 import getCurrentDateTime from '../../utils/getCurrentDateTime';
 
-function RadioInputWithDate({ label, name, onChange }) {
+function RadioInputWithDate({ label, name, onChange, selectedValue }) {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedDateTime, setSelectedDateTime] = useState('');
-  const [selectedOption, setSelectedOption] = useState('');
+  const [selectedOption, setSelectedOption] = useState(selectedValue);
 
   const handleChange = (e) => {
     setSelectedOption(e.target.value);
@@ -28,6 +28,13 @@ function RadioInputWithDate({ label, name, onChange }) {
     setSelectedDateTime(e.target.value);
     onChange(e)
   }
+
+  useEffect(() => {
+    if(selectedValue === 'ASAP')
+      setSelectedOption(selectedValue)
+  
+  }, [selectedValue])
+  
 
   return (
     <div className='flex flex-col text-nowrap'>

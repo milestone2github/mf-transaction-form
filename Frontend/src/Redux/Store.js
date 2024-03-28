@@ -5,6 +5,7 @@ import switchDataReducer from '../Reducers/SwitchDataSlice'
 import commonDataReducer from '../Reducers/CommonDataSlice'
 import userReducer from '../Reducers/UserSlice'
 import optionListsReducer from '../Reducers/OptionListsSlice'
+import transactionReducer from '../Reducers/TransactionSlice'
 
 export default configureStore({
     reducer: {
@@ -14,5 +15,6 @@ export default configureStore({
         commonData: commonDataReducer,
         user: userReducer,
         optionLists: optionListsReducer,
+        transactions: transactionReducer
     }
 })

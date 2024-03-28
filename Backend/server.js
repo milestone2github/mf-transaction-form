@@ -1,7 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const express = require("express");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const path = require("path");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
@@ -16,10 +16,10 @@ app.use(
     secret: process.env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { 
+    cookie: {
       secure: false, // Set to true if using https
-      maxAge: 24 * 3600000
-    }, 
+      maxAge: 24 * 3600000,
+    },
   })
 );
 
@@ -112,19 +112,35 @@ app.get("/api/investors", async (req, res) => {
     const name = req.query.name;
     const pan = req.query.pan;
     const fh = req.query.fh;
-
+    var search_result = parseInt(req.query.searchAll);
+    // search_result = 1;
     if (!name && !pan && !fh) {
       return res.status(400).send("name or pan or fh parameter is required");
     }
     var query;
-    if (name) {
+    // console.log(req.session.user.name);
+    var rm_det = req.session.user.name;
+    // rm_det="VILAKSHAN P BHUTANI";
+    if (name && search_result) {
       query = { NAME: new RegExp(name, "i") };
     }
-    if (pan) {
+    else if (name) {
+      query = { NAME: new RegExp(name, "i"), "RELATIONSHIP  MANAGER": rm_det };
+    }
+    if (pan && search_result) {
       query = { PAN: new RegExp(pan, "i") };
     }
-    if (fh) {
+    else if (pan) {
+      query = { PAN: new RegExp(pan, "i"), "RELATIONSHIP  MANAGER": rm_det };
+    }
+    if (fh && search_result) {
       query = { "FAMILY HEAD": new RegExp(fh, "i") };
+    }
+    if (fh) {
+      query = {
+        "FAMILY HEAD": new RegExp(fh, "i"),
+        "RELATIONSHIP  MANAGER": rm_det,
+      };
     }
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
@@ -136,26 +152,42 @@ app.get("/api/investors", async (req, res) => {
 
 app.get("/api/folios", async (req, res) => {
   try {
-    const collection = req.db.collection("BSEOrderStatus"); // Ensure this is the correct collection name
-    const { keywords } = req.query; // Assuming 'keywords' is the client name you're searching for
-    if (!keywords) {
-      return res.status(400).send("Client name parameter is required");
+    const iwellCode = req.query.iwell;
+    var schemeNamePrefix = req.query.amcName;
+    schemeNamePrefix=schemeNamePrefix.split(' ')[0];
+    if (!iwellCode || !schemeNamePrefix) {
+      return res
+        .status(400)
+        .send("iwell code and scheme name prefix are required");
     }
-
-    var query = { ClientName: new RegExp(keywords, "i") }; // Case-insensitive search for client name
-
-    const documents = await collection.find(query).toArray();
-
-    const result = documents.map((doc) => {
-      const folio =
-        doc.FolioNo && doc.FolioNo.trim() !== "" ? doc.FolioNo : doc.DPFolioNo;
-      return {
-        ...doc,
-        FolioOrDPFolio: folio, // Add a new field to indicate the chosen folio number
+    const collection = req.db.collection("folioMasterDb");
+    var query = {
+      "IWELL CODE": parseInt(iwellCode),
+      "SCHEME NAME": new RegExp(`^${schemeNamePrefix}`, "i")
+    };
+    const projection = {
+      "_id": 0,
+      "IWELL CODE": 1,
+      "SCHEME NAME": 1,
+      "FOLIO NO": 1,
+      "UNITS": 1,
+      "HOLDING": 1,
+      "AUM": 1,
+      "BANK NAME": 1,
+      "ACCOUNT NO": 1
+    };
+    var result = await collection.find(query,{projection}).toArray();
+    if(!result.length){
+      query = {
+        "IWELL CODE": parseInt(iwellCode)
       };
-    });
-
-    res.status(200).json(result);
+      result=await collection.find(query,{projection}).toArray();
+    }
+    if (result) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).send("Folio not found");
+    }
   } catch (error) {
     console.error("Error fetching folios", error);
     res.status(500).send("Error while fetching folios");

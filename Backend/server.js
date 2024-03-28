@@ -109,39 +109,33 @@ app.get("/api/user/checkLoggedIn", (req, res) => {
 app.get("/api/investors", async (req, res) => {
   try {
     const collection = req.db.collection("MintDb");
-    const name = req.query.name;
-    const pan = req.query.pan;
-    const fh = req.query.fh;
-    var search_result = parseInt(req.query.searchAll);
-    // search_result = 1;
+    const { name, pan, fh } = req.query;
+    // Directly parse searchAll as a boolean
+    const searchAll = req.query.searchall === 'true';
+
     if (!name && !pan && !fh) {
       return res.status(400).send("name or pan or fh parameter is required");
     }
-    var query;
-    // console.log(req.session.user.name);
-    var rm_det = req.session.user.name;
-    // rm_det="VILAKSHAN P BHUTANI";
-    if (name && search_result) {
-      query = { NAME: new RegExp(name, "i") };
-    }
-    else if (name) {
-      query = { NAME: new RegExp(name, "i"), "RELATIONSHIP  MANAGER": rm_det };
-    }
-    if (pan && search_result) {
-      query = { PAN: new RegExp(pan, "i") };
+
+    let query = {};
+    const rmName = req.session.user.name;
+
+    // Add query parameters based on the presence of 'name', 'pan', or 'fh'
+    if (name) {
+      query.NAME = new RegExp(name, "i");
     }
     else if (pan) {
-      query = { PAN: new RegExp(pan, "i"), "RELATIONSHIP  MANAGER": rm_det };
+      query.PAN = new RegExp(pan, "i");
     }
-    if (fh && search_result) {
-      query = { "FAMILY HEAD": new RegExp(fh, "i") };
+    else if (fh) {
+      query["FAMILY HEAD"] = new RegExp(fh, "i");
     }
-    if (fh) {
-      query = {
-        "FAMILY HEAD": new RegExp(fh, "i"),
-        "RELATIONSHIP  MANAGER": rm_det,
-      };
+
+    // Add "RELATIONSHIP MANAGER" to the query if searchAll is false
+    if (!searchAll) {
+      query["RELATIONSHIP MANAGER"] = rmName;
     }
+
     const result = await collection.find(query).toArray();
     res.status(200).json(result);
   } catch (error) {
@@ -149,6 +143,7 @@ app.get("/api/investors", async (req, res) => {
     res.status(500).send("Error while fetching investors");
   }
 });
+
 
 app.get("/api/folios", async (req, res) => {
   try {

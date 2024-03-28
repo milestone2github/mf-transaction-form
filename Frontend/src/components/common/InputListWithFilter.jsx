@@ -98,6 +98,12 @@ function CustomInputListWithFilter({
     }
   };
 
+  // side effect to listen filter change 
+  useEffect(() => {
+    fetchData(inputValue, id, filterValue);
+  
+  }, [filterValue])
+  
   return (
     <div className='flex flex-col gap-1'>
       <div className="flex justify-between">
